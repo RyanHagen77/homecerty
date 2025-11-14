@@ -1,78 +1,123 @@
+// app/api/home/claim/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 
+const claimSchema = z.object({
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(2, "State is required"),
+  zip: z.string().min(5, "ZIP code is required"),
+});
+
+function normalizeAddress(parts: { address: string; city: string; state: string; zip: string }): string {
+  return `${parts.address}${parts.city}${parts.state}${parts.zip}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 export async function POST(req: Request) {
+  const session = await getServerSession(authConfig);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
   try {
-    const session = await getServerSession(authConfig);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as any).id as string;
     const body = await req.json();
-    const address = String(body.address ?? "").trim();
-    const city = (body.city ?? "").trim();
-    const state = (body.state ?? "").trim();
-    const zip = (body.zip ?? "").trim();
+    const data = claimSchema.parse(body);
 
-    if (!address) {
-      return NextResponse.json({ error: "Missing address" }, { status: 400 });
-    }
+    const normalizedAddress = normalizeAddress(data);
 
-    // 1️⃣ Check if this user already owns a home at that address
-    const existing = await prisma.home.findFirst({
-      where: { ownerId: userId, address, city, state, zip },
-      select: { id: true },
+    // Check if home already exists
+    let home = await prisma.home.findFirst({
+      where: { normalizedAddress },
     });
 
-    let homeId: string;
-
-    if (existing) {
-      // Ensure HomeAccess exists
-      await prisma.homeAccess.upsert({
-        where: { homeId_userId: { homeId: existing.id, userId } },
-        update: { role: "owner" },
-        create: { homeId: existing.id, userId, role: "owner" },
-      });
-
-      homeId = existing.id;
-    } else {
-      // 2️⃣ Create a new home and owner access
-      const home = await prisma.home.create({
-        data: {
-          ownerId: userId,
-          address,
-          city,
-          state,
-          zip,
+    if (home) {
+      // Check if user already has access
+      const existingAccess = await prisma.homeAccess.findFirst({
+        where: {
+          homeId: home.id,
+          userId,
         },
-        select: { id: true },
       });
 
+      if (existingAccess) {
+        return NextResponse.json(
+          { error: "You already have access to this home", id: home.id },
+          { status: 400 }
+        );
+      }
+
+      // Check if home has an owner
+      const existingOwner = await prisma.homeAccess.findFirst({
+        where: {
+          homeId: home.id,
+          role: "OWNER",
+        },
+      });
+
+      if (existingOwner) {
+        return NextResponse.json(
+          { error: "This home is already claimed by another user" },
+          { status: 400 }
+        );
+      }
+
+      // Grant access to existing home
       await prisma.homeAccess.create({
-        data: { homeId: home.id, userId, role: "owner" },
+        data: {
+          homeId: home.id,
+          userId,
+          role: "OWNER"
+        },
       });
 
-      homeId = home.id;
+      return NextResponse.json({ id: home.id });
     }
 
-    // 3️⃣ Always update user's lastHomeId
-    await prisma.user.update({
-      where: { id: userId },
-      data: { lastHomeId: homeId },
+    // Create new home
+    home = await prisma.home.create({
+      data: {
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zip: data.zip,
+        normalizedAddress,
+        ownerId: userId,
+      },
     });
 
-    // 4️⃣ Done
-    return NextResponse.json({ id: homeId }, { status: 200 });
-  } catch (err: any) {
-    console.error("Claim home error:", err);
+    // Grant owner access
+    await prisma.homeAccess.create({
+      data: {
+        homeId: home.id,
+        userId,
+        role: "OWNER"
+      },
+    });
+
+    return NextResponse.json({ id: home.id });
+  } catch (error) {
+    console.error("Error claiming home:", error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.issues },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: err?.message ?? "Could not claim home" },
-      { status: 500 },
+      { error: "Failed to claim home" },
+      { status: 500 }
     );
   }
 }

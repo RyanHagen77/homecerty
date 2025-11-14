@@ -6,22 +6,32 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-
-type ProKind = "CONTRACTOR" | "REALTOR" | "INSPECTOR";
-
-function prettyType(t?: ProKind | null) {
-  if (!t) return "—";
-  return t.charAt(0) + t.slice(1).toLowerCase();
-}
+import {
+  glass,
+  glassTight,
+  heading,
+  textMeta,
+  ctaPrimary,
+  ctaGhost,
+} from "@/lib/glass";
 
 export default async function ProDashboardPage() {
   const session = await getServerSession(authConfig);
 
-  if (!session?.user || session.user.role !== "PRO") redirect("/login");
-  if (!session.user.id) redirect("/login");
+  if (!session?.user || session.user.role !== "PRO") {
+    redirect("/login");
+  }
+
+  if (!session.user.id) {
+    redirect("/login");
+  }
 
   const userId = session.user.id;
-  const isPending = session.user.proStatus === "PENDING";
+
+  // If pending-work-records, redirect to pending-work-records page
+  if (session.user.proStatus === "PENDING") {
+    redirect("/pro/contractor/pending");
+  }
 
   const proProfile = await prisma.proProfile.findUnique({
     where: { userId },
@@ -35,78 +45,6 @@ export default async function ProDashboardPage() {
     },
   });
 
-  // Pending view
-  if (isPending) {
-    return (
-      <main className="relative min-h-screen text-white">
-        <Bg />
-        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="alert-glass p-8 text-center">
-            <div className="mb-6 text-6xl">⏳</div>
-            <h1 className="mb-4 heading text-3xl">Welcome to MyHomeDox Pro!</h1>
-            <p className="mb-6 textMeta text-base">Your application is under review</p>
-
-            <div className="mx-auto max-w-2xl glass p-6 text-left">
-              <h2 className="mb-4 heading text-xl">What happens next?</h2>
-              <ol className="space-y-3 textMeta">
-                <li className="flex items-start">
-                  <span className="mr-3 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100/20 text-xs font-semibold text-amber-300">1</span>
-                  <span>We&apos;ll review your application within 1–2 business days</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-3 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100/20 text-xs font-semibold text-amber-300">2</span>
-                  <span>You&apos;ll receive an email notification once approved</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-3 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100/20 text-xs font-semibold text-amber-300">3</span>
-                  <span>After approval, invite clients, send quotes, and manage your business</span>
-                </li>
-              </ol>
-            </div>
-
-            <div className="mt-8">
-              <h3 className="mb-4 heading text-lg">Your Application Details</h3>
-              <div className="mx-auto max-w-2xl glass p-6 text-left">
-                <div className="grid grid-cols-2 gap-4 textMeta">
-                  <div>
-                    <p className="text-white/60 font-medium">Name</p>
-                    <p className="text-white">{session.user.name || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/60 font-medium">Email</p>
-                    <p className="text-white">{session.user.email || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/60 font-medium">Business Name</p>
-                    <p className="text-white">{proProfile?.businessName || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/60 font-medium">Type</p>
-                    <p className="text-white">{prettyType(proProfile?.type as ProKind | null)}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/60 font-medium">Phone</p>
-                    <p className="text-white">{proProfile?.phone || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/60 font-medium">License</p>
-                    <p className="text-white">{proProfile?.licenseNo || "Not provided"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 flex justify-center gap-4">
-              <Link href="/pro/profile" className="ctaGhost px-6 py-3 text-sm">Edit Profile</Link>
-              <a href="mailto:support@myhomedox.com" className="ctaPrimary px-6 py-3 text-sm">Contact Support</a>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // Approved: load dashboard data from DB
   const connections = await prisma.connection.findMany({
     where: { contractorId: userId, status: "ACTIVE" },
     include: {
@@ -117,45 +55,81 @@ export default async function ProDashboardPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Mock data
-  const mockJobs = [
-    { id: "j1", title: "AC Tune-up", clientAddress: "1842 Maple St", due: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), status: "scheduled", estAmount: 180 },
-    { id: "j2", title: "Heat Pump Install Quote", clientAddress: "92 3rd Ave", due: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), status: "requested" },
-  ];
-
-  const mockRecords = [
-    { id: "r1", title: "Furnace Repair", date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), address: "73 Oak Ct", amount: 420 },
-    { id: "r2", title: "Mini-split Install", date: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), address: "11 Lakeview Dr", amount: 3200 },
-  ];
-
-  const mockReviews = [
-    { id: "rev1", author: "K. Santos", rating: 5, text: "On time, super clear, fair price.", date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) },
-    { id: "rev2", author: "D. Patel", rating: 4, text: "Quick thermostat swap, works great.", date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) },
-  ];
-
   return (
     <main className="relative min-h-screen text-white">
       <Bg />
 
-      <div className="mx-auto max-w-7xl p-6 space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
+        {/* Header */}
+        <section className={glass}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className={`text-2xl font-semibold ${heading}`}>
+                {proProfile?.businessName || "Pro Dashboard"}
+              </h1>
+              <p className={textMeta}>
+                {proProfile?.type === "CONTRACTOR"
+                  ? "Contractor"
+                  : proProfile?.type === "REALTOR"
+                  ? "Realtor"
+                  : proProfile?.type === "INSPECTOR"
+                  ? "Inspector"
+                  : "Professional"}
+                {proProfile?.verified && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-100">
+                    ✓ Verified
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="hidden gap-2 sm:flex">
+              <Link href="/pro/contractor/work-records/new" className={ctaPrimary}>
+                + Document Work
+              </Link>
+              <Link href="/pro/contractor/invitations" className={ctaGhost}>
+                Invite Homeowner
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <div className="glass p-6">
-            <p className="textMeta">Active Clients</p>
-            <p className="mt-2 text-3xl font-bold text-white">{connections.length}</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className={glass}>
+            <p className={`text-sm font-medium ${textMeta}`}>Active Clients</p>
+            <p className={`mt-2 text-3xl font-bold ${heading}`}>
+              {connections.length}
+            </p>
+            <p className="mt-1 text-xs text-white/60">
+              Connections with homeowners on MyHomeDox
+            </p>
           </div>
-          <div className="glass p-6">
-            <p className="textMeta">Active Jobs</p>
-            <p className="mt-2 text-3xl font-bold text-white">{mockJobs.length}</p>
+
+          <div className={glass}>
+            <p className={`text-sm font-medium ${textMeta}`}>Active Jobs</p>
+            <p className={`mt-2 text-3xl font-bold ${heading}`}>—</p>
+            <p className="mt-1 text-xs text-white/60">
+              Job tracking coming soon
+            </p>
           </div>
-          <div className="glass p-6">
-            <p className="textMeta">This Month</p>
-            <p className="mt-2 text-3xl font-bold text-white">$3,800</p>
+
+          <div className={glass}>
+            <p className={`text-sm font-medium ${textMeta}`}>This Month</p>
+            <p className={`mt-2 text-3xl font-bold ${heading}`}>—</p>
+            <p className="mt-1 text-xs text-white/60">
+              Revenue analytics coming soon
+            </p>
           </div>
-          <div className="glass p-6">
-            <p className="textMeta">Avg Rating</p>
-            <p className="mt-2 text-3xl font-bold text-white">{proProfile?.rating?.toFixed(1) || "—"} ★</p>
+
+          <div className={glass}>
+            <p className={`text-sm font-medium ${textMeta}`}>Avg Rating</p>
+            <p className={`mt-2 text-3xl font-bold ${heading}`}>
+              {proProfile?.rating?.toFixed(1) || "—"}{" "}
+              <span className="text-base align-middle">★</span>
+            </p>
+            <p className="mt-1 text-xs text-white/60">
+              Based on homeowner reviews (coming soon)
+            </p>
           </div>
         </div>
 
@@ -164,113 +138,140 @@ export default async function ProDashboardPage() {
           {/* Left column */}
           <div className="space-y-6 lg:col-span-2">
             {/* Active Jobs */}
-            <div className="glass p-6">
+            <section className={glass}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="heading text-xl">Active Jobs</h2>
-                <Link href="/pro/jobs" className="ctaGhost text-sm px-3 py-1.5">View All</Link>
+                <h2 className={`text-xl font-semibold ${heading}`}>Active Jobs</h2>
+                <span className={`text-xs ${textMeta}`}>Job board coming soon</span>
               </div>
 
-              {mockJobs.length === 0 ? (
-                <div className="py-8 textMeta text-center"><p>No active jobs</p></div>
-              ) : (
-                <div className="space-y-3">
-                  {mockJobs.map((job) => (
-                    <div key={job.id} className="glassTight p-4 hover:bg-white/10">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-white font-medium">{job.title}</h3>
-                          <p className="textMeta">{job.clientAddress} • Due {new Date(job.due).toLocaleDateString()}</p>
-                        </div>
-                        {job.estAmount && <span className="pill pill--ok">${job.estAmount}</span>}
-                      </div>
-                    </div>
-                  ))}
+              <div className="rounded-xl border border-dashed border-white/20 bg-white/5 p-6 text-center">
+                <p className="text-white/80 mb-2">
+                  Job tracking and scheduling aren&apos;t live yet.
+                </p>
+                <p className={`mb-4 text-sm ${textMeta}`}>
+                  For now, document your work and invite homeowners to verify it.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link
+                    href="/pro/contractor/work-records/new"
+                    className={`${ctaPrimary} px-4 py-2 text-sm`}
+                  >
+                    + Document Work
+                  </Link>
+                  <Link
+                    href="/pro/contractor/invitations"
+                    className={`${ctaGhost} px-4 py-2 text-sm`}
+                  >
+                    Invite Homeowner
+                  </Link>
                 </div>
-              )}
-            </div>
+              </div>
+            </section>
 
-            {/* Completed Jobs */}
-            <div className="glass p-6">
+            {/* Recent Work */}
+            <section className={glass}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="heading text-xl">Recent Work</h2>
+                <h2 className={`text-xl font-semibold ${heading}`}>Recent Work</h2>
+                <Link
+                  href="/pro/contractor/work-records"
+                  className="text-sm text-white/70 hover:text-white"
+                >
+                  View Work Records
+                </Link>
               </div>
-              <div className="space-y-3">
-                {mockRecords.map((record) => (
-                  <div key={record.id} className="flex items-center justify-between border-b border-white/10 pb-3 last:border-0">
-                    <div>
-                      <p className="text-white font-medium">{record.title}</p>
-                      <p className="textMeta">{new Date(record.date).toLocaleDateString()} • {record.address}</p>
-                    </div>
-                    <span className="text-white font-medium">${record.amount}</span>
-                  </div>
-                ))}
+
+              <div className="rounded-xl border border-dashed border-white/20 bg-white/5 p-6 text-center">
+                <p className="text-white/80 mb-2">
+                  Your documented work will appear here.
+                </p>
+                <p className={`mb-4 text-sm ${textMeta}`}>
+                  Capture installs, repairs, and inspections so homeowners can keep a
+                  verified history of your work.
+                </p>
+                <Link
+                  href="/pro/contractor/work-records/new"
+                  className={`${ctaPrimary} px-4 py-2 text-sm`}
+                >
+                  Document Your First Job
+                </Link>
               </div>
-            </div>
+            </section>
           </div>
 
           {/* Right column */}
           <div className="space-y-6">
             {/* Clients */}
-            <div className="glass p-6">
+            <section className={glass}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="heading text-xl">Clients</h2>
-                <Link href="/pro/clients" className="ctaGhost text-sm px-3 py-1.5">View All</Link>
+                <h2 className={`text-xl font-semibold ${heading}`}>Clients</h2>
+                <Link
+                  href="/pro/contractor/clients"
+                  className="px-3 py-1.5 text-sm text-white/75 hover:text-white"
+                >
+                  View All
+                </Link>
               </div>
 
               {connections.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="mb-4 textMeta">No clients yet</p>
-                  <Link href="/pro/invite" className="ctaPrimary inline-block px-4 py-2 text-sm">Invite Your First Client</Link>
+                  <p className={`mb-2 ${textMeta}`}>No clients yet</p>
+                  <p className={`mb-4 text-sm ${textMeta}`}>
+                    Invite homeowners you&apos;ve worked with to connect their home.
+                  </p>
+                  <Link
+                    href="/pro/contractor/invitations"
+                    className={`${ctaPrimary} inline-block px-4 py-2 text-sm`}
+                  >
+                    Invite Your First Client
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {connections.map((conn) => (
-                    <div key={conn.id} className="glassTight p-3">
-                      <p className="text-white font-medium">{conn.homeowner?.name || "—"}</p>
-                      <p className="textMeta">{conn.home?.address}{conn.home?.city ? `, ${conn.home.city}` : ""}</p>
+                    <div key={conn.id} className={glassTight}>
+                      <p className="font-medium text-white">
+                        {conn.homeowner?.name || conn.homeowner?.email || "Homeowner"}
+                      </p>
+                      <p className={textMeta}>
+                        {conn.home?.address}
+                        {conn.home?.city ? `, ${conn.home.city}` : ""}
+                        {conn.home?.state ? `, ${conn.home.state}` : ""}
+                      </p>
                     </div>
                   ))}
+                  <div className="pt-2 text-right">
+                    <Link
+                      href="/pro/contractor/invitations"
+                      className="text-xs text-white/70 hover:text-white"
+                    >
+                      Send another invite →
+                    </Link>
+                  </div>
                 </div>
               )}
-            </div>
+            </section>
 
-            {/* Reviews */}
-            <div className="glass p-6">
+            {/* Reviews (placeholder) */}
+            <section className={glass}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="heading text-xl">Recent Reviews</h2>
+                <h2 className={`text-xl font-semibold ${heading}`}>Recent Reviews</h2>
               </div>
-              <div className="space-y-4">
-                {mockReviews.map((review) => (
-                  <div key={review.id} className="border-b border-white/10 pb-4 last:border-0">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-white font-medium">{review.author}</span>
-                      <span className="text-amber-300 text-sm">{review.rating} ★</span>
-                    </div>
-                    <p className="textMeta">{review.text}</p>
-                    <p className="mt-1 text-[11px] text-white/50">{new Date(review.date).toLocaleDateString()}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="glass p-6">
-              <h2 className="mb-4 heading text-xl">Quick Actions</h2>
-              <div className="space-y-2">
-                <Link href="/pro/invite" className="glassTight block p-3 text-center hover:bg-white/10">
-                  <span className="text-2xl">📨</span>
-                  <p className="mt-1 text-white font-medium text-sm">Invite Client</p>
-                </Link>
-                <Link href="/pro/profile" className="glassTight block p-3 text-center hover:bg-white/10">
-                  <span className="text-2xl">⚙️</span>
-                  <p className="mt-1 text-white font-medium text-sm">Edit Profile</p>
+              <div className="rounded-xl border border-dashed border-white/20 bg-white/5 p-5 text-center">
+                <p className="mb-2 text-white/80">No reviews yet</p>
+                <p className={`mb-4 text-sm ${textMeta}`}>
+                  As homeowners verify your work and leave feedback, their reviews
+                  will show up here.
+                </p>
+                <Link
+                  href="/pro/profile"
+                  className="text-sm text-white/80 underline-offset-2 hover:underline"
+                >
+                  Check your public profile
                 </Link>
               </div>
-            </div>
+            </section>
           </div>
         </div>
-
-        <div className="h-12" />
       </div>
     </main>
   );
@@ -284,11 +285,11 @@ function Bg() {
         alt=""
         fill
         sizes="100vw"
-        className="object-cover md:object-[50%_35%] lg:object-[50%_30%]"
+        className="object-cover object-center"
         priority
       />
       <div className="absolute inset-0 bg-black/45" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.6))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.45))]" />
     </div>
   );
 }

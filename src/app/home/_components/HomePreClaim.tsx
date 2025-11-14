@@ -7,9 +7,7 @@ import { ClaimHomeModal } from "../_components/ClaimHomeModal";
 import { AddRecordModal, type UnifiedRecordPayload } from "@/app/home/_components/AddRecordModal";
 import { ShareAccessModal } from "@/app/home/_components/ShareAccessModal";
 import { ClientCard } from "@/app/home/_components/ClientCard";
-import { saveJSON, loadJSON } from "@/lib/storage";
 import { glass, glassTight, textMeta, ctaPrimary, ctaGhost, heading } from "@/lib/glass";
-import { lookupByAddress } from "@/lib/mock";
 import HomeTopBar from "../_components/HomeTopBar";
 
 /* ---------- Types ---------- */
@@ -253,7 +251,6 @@ export default function HomePage() {
       </div>
 
       <div className="mx-auto max-w-7xl p-6 space-y-6">
-        <HomeTopBar />
 
         {/* Claim banner */}
         <section className={`${glass} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
@@ -440,7 +437,7 @@ export default function HomePage() {
 
       <ShareAccessModal open={shareOpen} onCloseAction={() => setShareOpen(false)} />
 
-      <ClaimHomeModal open={claimOpen} onClose={() => setClaimOpen(false)} />
+      <ClaimHomeModal open={claimOpen} onCloseAction={() => setClaimOpen(false)} />
     </main>
   );
 }

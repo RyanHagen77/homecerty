@@ -38,7 +38,7 @@ export default function LoginClient() {
       callbackUrl: "/post-auth",
     });
     setBusyLink(false);
-    if (res?.error) setMsg("Could not send link");
+    if (res?.error) setMsg("Could not [id] link");
     else setMsg("Check your email for a sign-in link.");
   }
 

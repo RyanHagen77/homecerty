@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         name: name || null,
         passwordHash,
         role: userRole,
-        emailVerified: invitationToken ? new Date() : null, // Auto-verify if invited
+        emailVerified: invitationToken ? new Date() : null, // Auto-verify-work-records if invited
         proStatus: userRole === "PRO" ? "PENDING" : null,
       },
       select: {
@@ -161,7 +161,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "Failed to create account" },
+      { error: "Failed to create profile" },
       { status: 500 }
     );
   }

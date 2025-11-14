@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import ContractorTopBar from "@/app/pro/_components/ContractorTopBar";
 
 export default async function ProLayout({
@@ -42,16 +41,9 @@ export default async function ProLayout({
                   />
                 </svg>
                 <p className="text-sm font-medium text-yellow-100">
-                  {"Your professional account is pending approval. We'll email you when it's ready (typically 1–2 business days)."}
+                  {"Your professional profile is pending-work-records approval. We'll email you when it's ready (typically 1–2 business days)."}
                 </p>
               </div>
-
-              <Link
-                href="/pro/profile"
-                className="whitespace-nowrap text-sm font-medium text-yellow-200 hover:text-yellow-100"
-              >
-                View Profile →
-              </Link>
             </div>
           </div>
         </div>

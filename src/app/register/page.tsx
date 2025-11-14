@@ -87,7 +87,7 @@ export default function RegisterPage() {
       )}
 
       <h1 className="text-2xl font-semibold">
-        {invitationData ? "Accept Invitation" : "Create account"}
+        {invitationData ? "Accept Invitation" : "Create profile"}
       </h1>
 
       <form onSubmit={onSubmit} className="space-y-3">
@@ -120,7 +120,7 @@ export default function RegisterPage() {
           className="w-full rounded p-2 bg-black text-white disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? "Creating account..." : invitationData ? "Accept & Create Account" : "Create account"}
+          {loading ? "Creating profile..." : invitationData ? "Accept & Create Account" : "Create profile"}
         </button>
       </form>
 

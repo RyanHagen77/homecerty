@@ -9,10 +9,11 @@ export default function ContractorTopBar() {
 
   const links = [
     { href: "/pro/contractor/dashboard", label: "Dashboard" },
-    { href: "/pro/contractor/work", label: "Work Requests" },      // Jobs reimagined
-    { href: "/pro/contractor/properties", label: "Properties" },   // Clients reimagined
-    { href: "/pro/contractor/analytics", label: "Analytics" },     // Billing reimagined
-    { href: "/pro/contractor/profile", label: "Profile" },         // Account stays similar
+    { href: "/pro/contractor/work-records", label: "Work Requests" },
+    { href: "/pro/contractor/invitations", label: "Invitations" },
+    { href: "/pro/contractor/properties", label: "Properties" },
+    { href: "/pro/contractor/analytics", label: "Analytics" },
+    { href: "/pro/contractor/profile", label: "Profile" },
   ];
 
   return (

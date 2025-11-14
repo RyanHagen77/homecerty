@@ -34,7 +34,7 @@ export default function RealtorTopBar() {
     { href: "/pro/realtor/calendar", label: "Calendar" },
     { href: "/pro/realtor/reports", label: "Reports", badge: counts.reports },
     { href: "/pro/realtor/requests", label: "Requests", badge: counts.pending, tone: "sky" },
-    { href: "/pro/realtor/account", label: "Account" },
+    { href: "/pro/realtor/profile", label: "Account" },
   ];
 
   return <TopBar links={links} srBrand="MyHomeDox Realtor" logoAlt="MyHomeDox" />;

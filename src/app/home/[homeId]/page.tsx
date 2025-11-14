@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
-import { glass, glassTight, textMeta, ctaPrimary, ctaGhost, heading } from "@/lib/glass";
+import { glass, glassTight, textMeta, ctaPrimary, heading } from "@/lib/glass";
 import ClientActions from "@/app/home/_components/ClientActions";
 import { ClientCard } from "@/app/home/_components/ClientCard";
 

@@ -1,124 +1,156 @@
 "use client";
 import * as React from "react";
 import { Modal } from "@/components/ui/Modal";
-import { Input, Select, fieldLabel } from "@/components/ui";
 import { Button, GhostButton } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { glass, textMeta } from "@/lib/glass";
-import { loadJSON, saveJSON } from "@/lib/storage";
-
-type ClaimForm = {
-  address: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-};
+import AddressVerification from "@/components/AddressVerification";
 
 export function ClaimHomeModal({
   open,
-  onClose,
+  onCloseAction,
 }: {
   open: boolean;
-  onClose: () => void;
+  onCloseAction: () => void;
 }) {
   const { push } = useToast();
 
-  const [form, setForm] = React.useState<ClaimForm>({
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-  });
   const [submitting, setSubmitting] = React.useState(false);
-  const [msg, setMsg] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [verifiedAddress, setVerifiedAddress] = React.useState<{
+    street: string;
+    unit?: string;
+    city: string;
+    state: string;
+    zip: string;
+  } | null>(null);
 
-  // Prefill from last search if available
+  // Reset state when modal closes
   React.useEffect(() => {
-    if (!open) return;
-    const last = loadJSON<string>("lastSearchedAddress", "");
-    if (last && !form.address) {
-      setForm((f) => ({ ...f, address: last }));
+    if (!open) {
+      setVerifiedAddress(null);
+      setSubmitting(false);
+      setError(null);
     }
-  }, [open]); // eslint-disable-line
+  }, [open]);
+
+  function handleClose() {
+    console.log("🔴 Close button clicked");
+    onCloseAction();
+  }
+
+  async function handleVerified(address: {
+    street: string;
+    unit?: string;
+    city: string;
+    state: string;
+    zip: string;
+  }) {
+    setError(null);
+    setVerifiedAddress(address);
+  }
 
   async function claim() {
-    setMsg(null);
-    if (!form.address.trim()) {
-      setMsg("Please enter a street address.");
-      return;
-    }
+    if (!verifiedAddress) return;
+
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/home/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          address: verifiedAddress.unit
+            ? `${verifiedAddress.street} ${verifiedAddress.unit}`
+            : verifiedAddress.street,
+          city: verifiedAddress.city,
+          state: verifiedAddress.state,
+          zip: verifiedAddress.zip,
+        }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || "Could not claim home.");
-      // Optional: remember last claimed
-      saveJSON("lastClaimedAddress", form.address);
+
+      if (!res.ok) {
+        // Show error in modal instead of just toast
+        setError(j.error || "Could not claim home.");
+        return;
+      }
+
       push("Home claimed!");
       window.location.href = `/home/${j.id}`;
-    } catch (err: any) {
-      setMsg(err.message || "Something went wrong.");
-      push("Error claiming home");
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || "Error claiming home");
     } finally {
       setSubmitting(false);
     }
   }
 
+  function handleReset() {
+    setVerifiedAddress(null);
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="Claim your home">
-      {/* remove global text-gray-900 to prevent unwanted gray inheritance */}
+    <Modal open={open} onCloseAction={handleClose} title="Claim Your Home">
       <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-2">
-          <Input
-            placeholder="Street address"
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-            aria-label="Street address"
-            className="border border-gray-300 text-gray-900 placeholder-gray-400"
-          />
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <Input
-              placeholder="City"
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-              aria-label="City"
-              className="border border-gray-300 text-gray-900 placeholder-gray-400"
-            />
-            <Input
-              placeholder="State"
-              value={form.state}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
-              aria-label="State"
-              className="border border-gray-300 text-gray-900 placeholder-gray-400"
-            />
-            <Input
-              placeholder="ZIP"
-              value={form.zip}
-              onChange={(e) => setForm({ ...form, zip: e.target.value })}
-              aria-label="ZIP"
-              className="border border-gray-300 text-gray-900 placeholder-gray-400"
-            />
-          </div>
-        </div>
+        {!verifiedAddress ? (
+          <>
+            <p className="text-sm text-white/80 mb-4">
+              Enter your property address. We&apos;ll verify it with USPS to ensure accuracy.
+            </p>
+            <AddressVerification onVerified={handleVerified} />
 
-        {msg && <p className="text-sm text-red-600">{msg}</p>}
+            {/* Cancel button */}
+            <div className="flex justify-end">
+              <GhostButton onClick={handleClose}>Cancel</GhostButton>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="rounded-lg border border-white/20 bg-white/5 p-4">
+              <p className="text-xs text-white/60 mb-2">Verified Address:</p>
+              <p className="text-sm text-white font-medium">
+                {verifiedAddress.street}
+                {verifiedAddress.unit && ` ${verifiedAddress.unit}`}
+              </p>
+              <p className="text-sm text-white">
+                {verifiedAddress.city}, {verifiedAddress.state} {verifiedAddress.zip}
+              </p>
+              <button
+                onClick={handleReset}
+                className="mt-2 text-xs text-white/70 hover:text-white"
+              >
+                Change address
+              </button>
+            </div>
 
-        {/* 👇 updated color to solid white */}
-        <p className="text-sm text-white">
-          We’ll attach this address to your account. You can manage access and
-          records once it’s claimed.
-        </p>
+            <p className="text-sm text-white/80">
+              We&apos;ll attach this address to your account. You can manage access and
+              records once it&apos;s claimed.
+            </p>
 
-        <div className="flex items-center justify-end gap-2">
-          <GhostButton onClick={onClose}>Cancel</GhostButton>
-          <Button onClick={claim} disabled={submitting}>
-            {submitting ? "Claiming…" : "Claim home"}
-          </Button>
-        </div>
+            {/* Error message */}
+            {error && (
+              <div className="rounded-lg border border-red-400/30 bg-red-400/10 p-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-red-400">⚠️</span>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-red-300">
+                      Unable to Claim Home
+                    </h4>
+                    <p className="mt-1 text-sm text-red-200">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2">
+              <GhostButton onClick={handleClose}>Cancel</GhostButton>
+              <Button onClick={claim} disabled={submitting}>
+                {submitting ? "Claiming…" : "Claim Home"}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </Modal>
   );

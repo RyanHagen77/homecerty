@@ -31,6 +31,7 @@ enum ProType {
 }
 
 enum AccessLevel {
+  OWNER
   VIEW
   COMMENT
   EDIT
@@ -44,13 +45,25 @@ enum AttachmentVisibility {
 
 /**
  * =========================
- * NEW: Connection System Enums
+ * Connection & workflow enums
  * =========================
  */
+
+enum EstablishedVia {
+  VERIFIED_WORK     // Through verified independent work
+  INVITATION        // Through work invitation
+  MANUAL           // Homeowner manually added
+}
+
 enum ConnectionStatus {
   PENDING
   ACTIVE
   ARCHIVED
+}
+
+enum InvitationType {
+  HOMEOWNER_TO_CONTRACTOR  // Homeowner invites contractor to do work
+  CONTRACTOR_TO_HOMEOWNER  // Contractor invites homeowner to verify completed work
 }
 
 enum InvitationStatus {
@@ -58,6 +71,53 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   CANCELLED
+}
+
+enum ThreadStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum HomeSystemType {
+  ROOF
+  HVAC
+  PLUMBING
+  ELECTRICAL
+  EXTERIOR
+  INTERIOR
+  APPLIANCE
+  OTHER
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  INAPP
+}
+
+enum WorkRequestStatus {
+  // Invitation-based flow
+  PENDING_ACCEPTANCE   // Waiting for other party to accept invitation
+  READY_TO_DOCUMENT    // Accepted, contractor needs to document
+
+  // Independent documentation flow (NEW)
+  DOCUMENTED_UNVERIFIED // Contractor documented, homeowner hasn't verified yet
+
+  // Shared states
+  DOCUMENTED           // Work documented, awaiting homeowner review
+  APPROVED            // Homeowner approved
+  REJECTED            // Homeowner rejected
+  DISPUTED            // Homeowner disputes details
+  EXPIRED             // Invitation expired
 }
 
 /**
@@ -68,7 +128,7 @@ enum InvitationStatus {
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
+  email         String    @unique @db.Citext
   passwordHash  String?
   name          String?
   image         String?
@@ -79,69 +139,142 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  accounts   Account[]
-  sessions   Session[]
-  homes      Home[]       @relation("HomeOwner")
+  accounts Account[]
+  sessions Session[]
+
+  // Ownership and access
+  homes      Home[]          @relation("HomeOwner")
+  ownerships HomeOwnership[]
   access     HomeAccess[]
-  records    Record[]     @relation("RecordCreator")
-  reminders  Reminder[]   @relation("ReminderCreator")
-  proProfile ProProfile?
 
-  // Attachments uploaded
-  attachmentsUploaded Attachment[] @relation("AttachmentUploader")
-
-  // Last home (if present)
-  lastHomeId String?
-  lastHome   Home?   @relation("UserLastHome", fields: [lastHomeId], references: [id])
-
-  // Warranty audit
+  // Content authored
+  records            Record[]   @relation("RecordCreator")
+  reminders          Reminder[] @relation("ReminderCreator")
   warrantiesCreated  Warranty[] @relation("WarrantyCreator")
   warrantiesVerified Warranty[] @relation("WarrantyVerifier")
 
-  // NEW: Contractor/Connection relations
+  // Pro profile
+  proProfile ProProfile?
+
+  // Uploads
+  attachmentsUploaded Attachment[] @relation("AttachmentUploader")
+
+  // Messaging
+  invitationsSent Invitation[]  @relation("InvitationsSent")
+  messagesSent    Message[]     @relation("MessagesSent")
+  messageReads    MessageRead[]
+
+  // Connections
   connectionsAsHomeowner  Connection[] @relation("ConnectionHomeowner")
   connectionsAsContractor Connection[] @relation("ConnectionContractor")
-  invitationsSent         Invitation[] @relation("InvitationsSent")
-  messagesSent            Message[]    @relation("MessagesSent")
+
+  // Work invitation relations
+  workInvitationsSent         WorkInvitation[] @relation("WorkInvitationsSent")
+  workInvitationsAsContractor WorkInvitation[] @relation("ContractorWorkInvitations")
+  workInvitationsAsHomeowner  WorkInvitation[] @relation("HomeownerWorkInvitations")
+
+  workRecordsAsContractor WorkRecord[] @relation("ContractorWorkRecords")
+  workRecordsApproved     WorkRecord[] @relation("WorkRecordApprovals")
+
+  // Last viewed home (optional)
+  lastHomeId String?
+  lastHome   Home?   @relation("UserLastHome", fields: [lastHomeId], references: [id])
+
+  // Audit / Notifications
+  auditLogs     AuditLog[]     @relation("AuditActor")
+  notifications Notification[]
+  Record        Record[]
 
   @@index([email])
   @@index([role])
   @@index([proStatus])
+  @@index([createdAt])
 }
 
 model Home {
-  id      String   @id @default(cuid())
-  address String
-  city    String
-  state   String
-  zip     String
-  photos  String[] @default([])
-  meta    Json?
+  id           String   @id @default(cuid())
+  address      String
+  addressLine2 String?
+  city         String
+  state        String
+  zip          String
+  postalCode   String?
+  county       String?
+  country      String?  @default("US")
+
+  normalizedAddress String? // Computed: lowercase, no spaces, standardized
+
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  apn          String? // assessor parcel number
+  photos       String[] @default([])
+  meta         Json?
+
+  auditLogs AuditLog[] @relation("AuditHome")
 
   ownerId String?
   owner   User?   @relation("HomeOwner", fields: [ownerId], references: [id])
 
-  // back-relations
+  // lifecycle
+  ownerships  HomeOwnership[]
   records     Record[]
   reminders   Reminder[]
   warranties  Warranty[]
-  access      HomeAccess[]
   attachments Attachment[]
+  access      HomeAccess[]
+  systems     HomeSystem[]
 
-  // back relation for lastHome
-  lastForUsers User[] @relation("UserLastHome")
-
-  // NEW: Connection relations
+  // Connections & collaboration
   connections Connection[]
   invitations Invitation[]
   threads     Thread[]
   quotes      Quote[]
+
+  // Work invitation relations
+  workInvitations WorkInvitation[]
+  workRecords     WorkRecord[]
+
+  // back relation for lastHome
+  lastForUsers User[] @relation("UserLastHome")
+
+  // soft-delete/archival
+  archivedAt DateTime?
+  deletedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([city, state])
+  @@index([updatedAt])
+  @@index([apn])
+}
+
+model HomeOwnership {
+  id        String    @id @default(cuid())
+  homeId    String
+  userId    String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([homeId, startedAt])
+  @@index([userId, startedAt])
+}
+
+model HomeSystem {
+  id     String         @id @default(cuid())
+  homeId String
+  type   HomeSystemType
+  name   String?
+  notes  String?        @db.Text
+
+  home    Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  records Record[]
+
+  @@index([homeId, type])
 }
 
 model Record {
@@ -153,55 +286,89 @@ model Record {
   kind      String?
   createdBy String?
   vendor    String?
-  cost      Float?
+  cost      Decimal? @db.Decimal(12, 2)
 
-  home    Home  @relation(fields: [homeId], references: [id])
-  creator User? @relation("RecordCreator", fields: [createdBy], references: [id])
+  // provenance / verification
+  verifiedBy String?
+  verifiedAt DateTime?
+
+  // link to a system/component
+  systemId String?
+
+  // relations
+  home     Home        @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  creator  User?       @relation("RecordCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  verifier User?       @relation(fields: [verifiedBy], references: [id], onDelete: SetNull)
+  system   HomeSystem? @relation(fields: [systemId], references: [id], onDelete: SetNull)
 
   attachments Attachment[]
+  threads     Thread[]
 
-  // NEW: Link to threads
-  threads Thread[]
+  // Link from approved work record
+  approvedWorkRecord WorkRecord? @relation("ApprovedWorkRecord")
+
+  // soft-delete/archival
+  archivedAt DateTime?
+  deletedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([homeId, date])
   @@index([createdBy])
+  @@index([homeId, kind, date])
 }
 
 model Attachment {
   id     String @id @default(cuid())
   homeId String
 
-  // exactly one parent:
+  // exactly one parent (optional):
   recordId   String?
   reminderId String?
   warrantyId String?
+  messageId  String?
 
   key        String
   url        String
   filename   String
   mimeType   String
-  size       Int
-  uploadedBy String
+  size       BigInt
+  uploadedBy String?
   createdAt  DateTime @default(now())
 
-  visibility AttachmentVisibility @default(OWNER)
-  notes      String?
+  visibility  AttachmentVisibility @default(OWNER)
+  notes       String?
+  containsPII Boolean              @default(false)
+
+  // security / storage / dedupe
+  storageProvider String    @default("s3") // s3|r2|gcs
+  checksum        String? // sha256 for dedupe
+  scannedAt       DateTime?
+  scanStatus      String? // clean|infected|unknown
+  publicToken     String?   @unique
+  publicExpiresAt DateTime?
+
+  // soft-delete/archival
+  archivedAt DateTime?
+  deletedAt  DateTime?
 
   // relations
-  home     Home      @relation(fields: [homeId], references: [id])
-  record   Record?   @relation(fields: [recordId], references: [id])
-  reminder Reminder? @relation(fields: [reminderId], references: [id])
-  warranty Warranty? @relation(fields: [warrantyId], references: [id])
-  uploader User      @relation("AttachmentUploader", fields: [uploadedBy], references: [id])
+  home     Home      @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  record   Record?   @relation(fields: [recordId], references: [id], onDelete: SetNull)
+  reminder Reminder? @relation(fields: [reminderId], references: [id], onDelete: SetNull)
+  warranty Warranty? @relation(fields: [warrantyId], references: [id], onDelete: SetNull)
+  message  Message?  @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  uploader User?     @relation("AttachmentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
 
   @@index([homeId])
   @@index([recordId])
   @@index([reminderId])
   @@index([warrantyId])
+  @@index([messageId])
   @@index([uploadedBy])
+  @@index([checksum])
+  @@index([homeId, visibility, createdAt])
 }
 
 model Reminder {
@@ -212,17 +379,23 @@ model Reminder {
   note      String?
   createdBy String?
 
-  home    Home  @relation(fields: [homeId], references: [id])
-  creator User? @relation("ReminderCreator", fields: [createdBy], references: [id])
+  home    Home  @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  creator User? @relation("ReminderCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 
   attachments Attachment[]
 
+  // soft-delete/archival
+  archivedAt DateTime?
+  deletedAt  DateTime?
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt  // ← Add @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([homeId, dueAt])
   @@index([createdBy])
+  @@index([homeId, dueAt, createdBy])
 }
+
 model Warranty {
   id        String    @id @default(cuid())
   homeId    String
@@ -238,9 +411,13 @@ model Warranty {
   verifiedBy String?
   verifiedAt DateTime?
 
-  home     Home  @relation(fields: [homeId], references: [id])
-  creator  User? @relation("WarrantyCreator", fields: [createdBy], references: [id])
-  verifier User? @relation("WarrantyVerifier", fields: [verifiedBy], references: [id])
+  // soft-delete/archival
+  archivedAt DateTime?
+  deletedAt  DateTime?
+
+  home     Home  @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  creator  User? @relation("WarrantyCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  verifier User? @relation("WarrantyVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
 
   attachments Attachment[]
 
@@ -264,14 +441,14 @@ model ProProfile {
   website   String?
   phone     String?
 
-  // NEW: Enhanced business fields
+  // Enhanced business fields
   businessName  String?
   bio           String?  @db.Text
   logo          String? // S3 URL
-  specialties   String[] @default([]) // ["hvac", "plumbing", "electrical"]
-  serviceAreas  String[] @default([]) // zip codes ["60098", "60014"]
+  specialties   String[] @default([]) // ["hvac","plumbing","electrical"]
+  serviceAreas  String[] @default([]) // zip codes ["60098","60014"]
   verified      Boolean  @default(false)
-  rating        Float? // calculated average from reviews
+  rating        Float?
   completedJobs Int      @default(0)
 
   createdAt DateTime @default(now())
@@ -290,17 +467,17 @@ model ProProfile {
  */
 
 model HomeAccess {
-  id         String    @id @default(cuid())
+  id         String      @id @default(cuid())
   homeId     String
   userId     String
-  role       String    // "owner" | "viewer" | "contributor"
+  role       AccessLevel
   migratedAt DateTime? // marks LS→DB migration completed for this user/home
 
-  home Home @relation(fields: [homeId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt  // ← Add @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([homeId, userId], name: "homeId_userId")
   @@index([homeId])
@@ -309,32 +486,43 @@ model HomeAccess {
 
 /**
  * =========================
- * NEW: Contractor/Connection System
+ * Contractor/Connection System
  * =========================
  */
 
-// Connection between homeowner and contractor
 model Connection {
   id           String           @id @default(cuid())
   homeownerId  String
   contractorId String
   homeId       String
   status       ConnectionStatus @default(PENDING)
-  invitedBy    String // userId who initiated
+  invitedBy    String
   invitedAt    DateTime         @default(now())
   acceptedAt   DateTime?
+
+  // ADD: Track how connection was established
+  establishedVia  EstablishedVia?
+  sourceRecordId  String?  // WorkRecord ID that established this connection
+
+  // ADD: Trust metrics
+  verifiedWorkCount Int     @default(0)
+  totalSpent        Decimal @default(0) @db.Decimal(12, 2)
+  lastWorkDate      DateTime?
 
   // Homeowner's private notes about this contractor
   notes String?
   tags  String[] @default([])
 
-  homeowner  User @relation("ConnectionHomeowner", fields: [homeownerId], references: [id])
-  contractor User @relation("ConnectionContractor", fields: [contractorId], references: [id])
-  home       Home @relation(fields: [homeId], references: [id])
+  homeowner  User @relation("ConnectionHomeowner", fields: [homeownerId], references: [id], onDelete: Cascade)
+  contractor User @relation("ConnectionContractor", fields: [contractorId], references: [id], onDelete: Cascade)
+  home       Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
 
   messages Message[]
   threads  Thread[]
   quotes   Quote[]
+
+  // soft-delete/archival
+  archivedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -346,20 +534,19 @@ model Connection {
   @@index([status])
 }
 
-// Invitations sent before connection exists
 model Invitation {
   id           String           @id @default(cuid())
   invitedBy    String // User who sent
   invitedEmail String
   invitedName  String?
-  homeId       String? // If homeowner inviting contractor to specific home
+  homeId       String?
   role         Role // HOMEOWNER or PRO
   status       InvitationStatus @default(PENDING)
   token        String           @unique @default(cuid())
-  message      String?          @db.Text // Personal message from inviter
+  message      String?          @db.Text
 
-  inviter User  @relation("InvitationsSent", fields: [invitedBy], references: [id])
-  home    Home? @relation(fields: [homeId], references: [id])
+  inviter User  @relation("InvitationsSent", fields: [invitedBy], references: [id], onDelete: Cascade)
+  home    Home? @relation(fields: [homeId], references: [id], onDelete: SetNull)
 
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -370,35 +557,50 @@ model Invitation {
   @@index([invitedBy])
 }
 
-// Messages between homeowner and contractor
 model Message {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   connectionId String
   senderId     String
-  content      String    @db.Text
-  readAt       DateTime?
+  content      String   @db.Text
+  createdAt    DateTime @default(now())
+
+  readAt DateTime? // optional global read (kept for backward compat)
 
   connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  sender     User       @relation("MessagesSent", fields: [senderId], references: [id])
+  sender     User       @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
+  // attachments on messages
+  attachments Attachment[]
+  reads       MessageRead[]
 
   @@index([connectionId, createdAt])
   @@index([senderId])
 }
 
-// Thread to group messages by topic/job
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, readAt])
+}
+
 model Thread {
-  id              String  @id @default(cuid())
+  id              String       @id @default(cuid())
   connectionId    String
   homeId          String
   subject         String
-  status          String  @default("active") // "active" | "completed" | "archived"
+  status          ThreadStatus @default(ACTIVE)
   relatedRecordId String?
 
   connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  home       Home       @relation(fields: [homeId], references: [id])
-  record     Record?    @relation(fields: [relatedRecordId], references: [id])
+  home       Home       @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  record     Record?    @relation(fields: [relatedRecordId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -408,20 +610,141 @@ model Thread {
   @@index([status])
 }
 
-// Quote/Estimate from contractor to homeowner
+/**
+ * =========================
+ * Work Request/Documentation System
+ * =========================
+ */
+
+model WorkInvitation {
+  id String @id @default(cuid())
+
+  // Who sent the invitation
+  invitedBy String
+  inviter   User   @relation("WorkInvitationsSent", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  invitationType InvitationType @default(HOMEOWNER_TO_CONTRACTOR)
+
+  // Property details
+  homeAddress String
+  homeCity    String?
+  homeState   String?
+  homeZip     String?
+  homeId      String? // Linked after homeowner accepts
+  home        Home?   @relation(fields: [homeId], references: [id], onDelete: SetNull)
+
+  // Work details
+  workType    String // "HVAC Repair", "Chimney Sweep"
+  workDate    DateTime // When the work was actually completed
+  description String?  @db.Text
+
+  // Participants
+  contractorId String
+  contractor   User   @relation("ContractorWorkInvitations", fields: [contractorId], references: [id], onDelete: Cascade)
+
+  homeownerId String? // Set when homeowner accepts
+  homeowner   User?   @relation("HomeownerWorkInvitations", fields: [homeownerId], references: [id], onDelete: SetNull)
+
+  // Status tracking
+  status WorkRequestStatus @default(PENDING_ACCEPTANCE)
+
+  // Optional message
+  message String? @db.Text
+
+  // Linked work record (after documentation)
+  workRecord WorkRecord?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // Optional expiration
+
+  @@index([contractorId])
+  @@index([homeownerId])
+  @@index([homeId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WorkRecord {
+  id String @id @default(cuid())
+
+
+  // Links to invitation (NOW OPTIONAL - null means independent documentation)
+  invitationId String?         @unique  // Changed from required to optional
+  invitation   WorkInvitation? @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  // Property and participants
+  homeId String
+  home   Home   @relation(fields: [homeId], references: [id], onDelete: Cascade)
+
+  contractorId String
+  contractor   User   @relation("ContractorWorkRecords", fields: [contractorId], references: [id], onDelete: Cascade)
+
+  // ADD: Address snapshot for matching (when no homeId initially)
+  addressSnapshot Json? // Store {line1, city, state, zip} for verification
+
+  // Work details
+  workType    String
+  workDate    DateTime
+  description String?  @db.Text
+  cost        Decimal? @db.Decimal(12, 2)
+
+  // Attachments
+  invoiceUrl String?
+  photos     String[] @default([])
+
+  // Warranty info
+  warrantyIncluded Boolean @default(false)
+  warrantyLength   String? // "1 year", "5 years", etc
+  warrantyDetails  String? @db.Text
+
+  // Status
+  status WorkRequestStatus @default(DOCUMENTED)
+
+  // ADD: Verification tracking (separate from status)
+  isVerified      Boolean   @default(false)  // Has homeowner verified?
+  claimedBy       String?                    // Homeowner who claimed this
+  claimedAt       DateTime?
+  verifiedBy      String?                    // Homeowner who verified details
+  verifiedAt      DateTime?
+
+  // Approval tracking
+  approvedBy      String?
+  approver        User?     @relation("WorkRecordApprovals", fields: [approvedBy], references: [id], onDelete: SetNull)
+  approvedAt      DateTime?
+  rejectionReason String?   @db.Text
+
+  // Link to final home record (after approval)
+  finalRecordId String? @unique
+  finalRecord   Record? @relation("ApprovedWorkRecord", fields: [finalRecordId], references: [id], onDelete: SetNull)
+
+  // Soft delete
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([homeId])
+  @@index([contractorId])
+  @@index([status])
+  @@index([invitationId])
+  @@index([createdAt])
+  @@index([isVerified]) // NEW: Index for filtering verified/unverified work
+}
+
 model Quote {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   connectionId String
   homeId       String
   title        String
-  description  String?   @db.Text
-  lineItems    Json // [{item: string, cost: number, qty: number}]
-  totalAmount  Float
-  status       String    @default("draft") // "draft" | "sent" | "accepted" | "declined" | "expired"
+  description  String?     @db.Text
+  totalAmount  Decimal     @db.Decimal(12, 2)
+  status       QuoteStatus @default(DRAFT)
   expiresAt    DateTime?
 
-  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  home       Home       @relation(fields: [homeId], references: [id])
+  connection Connection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  home       Home        @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  items      QuoteItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -429,6 +752,58 @@ model Quote {
   @@index([connectionId])
   @@index([homeId])
   @@index([status])
+}
+
+model QuoteItem {
+  id        String  @id @default(cuid())
+  quoteId   String
+  item      String
+  qty       Decimal @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(12, 2)
+  total     Decimal @db.Decimal(12, 2)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+}
+
+/**
+ * =========================
+ * Audit & Notifications
+ * =========================
+ */
+// AuditLog model — rename the relation to "AuditHome" to match
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  homeId    String?
+  entity    String
+  entityId  String
+  action    String
+  diff      Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // change THIS line:
+  home Home? @relation("AuditHome", fields: [homeId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId, createdAt])
+  @@index([homeId, createdAt])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  channel   NotificationChannel
+  subject   String
+  payload   Json
+  sentAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 /**

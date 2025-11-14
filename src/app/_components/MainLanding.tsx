@@ -8,26 +8,18 @@ import type { PropertyPayload } from "@/lib/types";
 
 type Audience = "home" | "pro";
 
-
-type Props = {
-  initialAudience: Audience;   // <-- tell TS this component takes the prop
-};
 export default function MainLanding() {
   const router = useRouter();
   const search = useSearchParams();
 
-  // initial audience from query (stable default)
   const initial = (search.get("audience") as Audience) || "home";
   const [aud, setAud] = React.useState<Audience>(initial);
 
-  // keep URL in sync when audience changes
   React.useEffect(() => {
     const qs = new URLSearchParams(search.toString());
     qs.set("audience", aud);
-    // replace (not push) so we don't grow history while toggling
     router.replace(`/?${qs.toString()}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aud]); // depend only on aud to avoid loops
+  }, [aud, router, search]);
 
   const [addr, setAddr] = React.useState("");
   const [data, setData] = React.useState<PropertyPayload | null>(null);
@@ -47,8 +39,9 @@ export default function MainLanding() {
       });
       if (!res.ok) throw new Error("Lookup failed");
       setData(await res.json());
-    } catch (err: any) {
-      setError(err?.message ?? "Something went wrong");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -57,18 +50,18 @@ export default function MainLanding() {
   const hero = React.useMemo(() => {
     if (aud === "home") {
       return {
-        headline: "The home record your buyers trust.",
-        sub: "Store repairs, warranties, and upgrades — then share a verified report in one click. Invite realtors and contractors with controlled access.",
+        headline: "Your home's report card, built for trust.",
+        sub: "Store repairs, upgrades, reminders and warranties. Share a verified report in one click. Invite professionals to document their work-records-records and stay connected.",
         primary: { label: "Create home record", href: "/home" },
         secondary: { label: "See sample report", href: "/report" },
         showAddress: true,
       };
     }
     return {
-      headline: "Verified home history for every listing.",
-      sub: "Request owner-controlled service records to reduce contingencies, build buyer confidence, and speed up closings.",
-      primary: { label: "Request records from owner", href: "/share" },
-      secondary: { label: "View sample report", href: "/report" },
+      headline: "Build your professional presence on the homes you serve.",
+      sub: "Document your work-records-records on client properties, maintain verified portfolios, and stay connected with homeowners and their trusted circle long after the job is done.",
+      primary: { label: "Apply as a Pro", href: "/apply" },
+      secondary: { label: "View sample record", href: "/report" },
       showAddress: false,
     };
   }, [aud]);
@@ -91,7 +84,7 @@ export default function MainLanding() {
 
       {/* Top bar */}
       <div className="mx-auto max-w-6xl px-4 md:px-8 pt-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 shrink-0">
             <Image
               src="/myhomedox_logo.png"
@@ -99,51 +92,17 @@ export default function MainLanding() {
               width={180}
               height={50}
               priority
-              className="h-7 w-auto sm:h-9"
+              className="h-7 w-auto sm:h-9 cursor-pointer"
               onClick={() => router.push("/")}
             />
           </div>
 
-          <div className="ml-auto flex items-center gap-2 basis-full sm:basis-auto sm:ml-auto">
-            <button
-              onClick={() => router.push("/login?role=homeowner")}
-              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto"
-            >
-              Homeowner Login
-            </button>
-
-          <div className="relative w-full sm:w-auto">
-            <details className="group">
-              <summary className="list-none cursor-pointer select-none rounded-full bg-white px-3 py-1.5 text-center text-sm text-slate-900 hover:bg-white/90">
-                Pro Login
-              </summary>
-
-              <div
-                className="z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/20 bg-white/95 text-slate-900 shadow-lg sm:absolute sm:right-0 sm:w-56"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                  onClick={() => router.push("/login?role=realtor")}
-                >
-                  Realtor
-                </button>
-                <button
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                  onClick={() => router.push("/login?role=inspector")}
-                >
-                  Inspector
-                </button>
-                <button
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                  onClick={() => router.push("/login?role=contractor")}
-                >
-                  Contractor
-                </button>
-              </div>
-            </details>
-          </div>
-          </div>
+          <button
+            onClick={() => router.push("/login")}
+            className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 backdrop-blur-sm"
+          >
+            Login / Create Account
+          </button>
         </div>
       </div>
 
@@ -230,16 +189,16 @@ export default function MainLanding() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {(aud === "home"
             ? [
-                ["Single source of truth", "All repairs, upgrades, and warranties in one place."],
-                ["Verified service history", "Provider verification that builds buyer trust."],
-                ["Share control", "Invite realtors or contractors with role-based access."],
-                ["Smart ownership", "Maintenance reminders and warranty expirations handled."],
+                ["Complete home history", "All repairs, upgrades, and warranties in one permanent record."],
+                ["Verified documentation", "Professionals document their work-records-records directly on your home's record."],
+                ["Easy sharing", "Give access to buyers, agents, or service providers with one link."],
+                ["Stay connected", "Maintain relationships with trusted contractors who know your home."],
               ]
             : [
-                ["Deal readiness", "Verified histories reduce surprises and renegotiations."],
-                ["Buyer confidence", "Proof of upkeep to justify price and terms."],
-                ["Collaboration", "Request and review records securely with clients."],
-                ["Integrations", "Export to CRM/MLS workflows."],
+                ["Document your work-records-records", "Create verified records of the work-records-records you do on client properties."],
+                ["Build your portfolio", "Show your craftsmanship with a history of completed projects."],
+                ["Stay connected", "Maintain relationships with homeowners and their trusted circle."],
+                ["Get discovered", "When homes change hands, new owners see your quality work-records-records."],
               ]
           ).map(([t, d]) => (
             <div
@@ -257,14 +216,14 @@ export default function MainLanding() {
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           {(aud === "home"
             ? [
-                ["1", "Claim your home", "Start from an address and we’ll prefill details."],
-                ["2", "Add records", "Upload receipts and link vendors; we auto-tag and organize."],
-                ["3", "Share the report", "Invite buyers, agents, or pros with a magic link."],
+                ["1", "Create your record", "Start with your address and we'll help build your home's history."],
+                ["2", "Add documentation", "Upload receipts and invite professionals to document their work-records-records."],
+                ["3", "Share with confidence", "Give buyers, agents, or contractors secure access when needed."],
               ]
             : [
-                ["1", "Request records", "Ask the owner for a verified Homefax with one link."],
-                ["2", "Review & attach", "Add to your listing package, disclosures, or CRM."],
-                ["3", "Win trust", "Reduce contingencies and speed up closings."],
+                ["1", "Apply to join", "Get verified as a contractor, realtor, or inspector."],
+                ["2", "Document your work-records-records", "Add records to the homes you serve (with owner permission)."],
+                ["3", "Build your presence", "Create a verifiable portfolio that travels with the homes."],
               ]
           ).map(([s, t, d]) => (
             <div

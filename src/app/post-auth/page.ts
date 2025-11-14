@@ -24,7 +24,7 @@ export default async function PostAuth() {
   // Pro users
   if (user?.role === "PRO") {
     if (user.proStatus === "PENDING") {
-      redirect("/pro/dashboard"); // Shows pending view
+      redirect("/pro/dashboard"); // Shows pending-work-records view
     }
     if (user.proStatus === "APPROVED") {
       redirect("/pro/dashboard"); // Shows full dashboard

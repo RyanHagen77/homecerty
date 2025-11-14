@@ -1,4 +1,3 @@
-// src/components/TopBar.tsx
 "use client";
 
 import Image from "next/image";
@@ -29,7 +28,6 @@ export function TopBar({
   const [open, setOpen] = useState(false);
   const { data: session, status } = useSession();
 
-  // close mobile menu on route changes
   useEffect(() => setOpen(false), [pathname]);
 
   const linkCn = useMemo(
@@ -83,42 +81,12 @@ export function TopBar({
               </button>
             </>
           ) : (
-            <>
-              <Link
-                href="/login?role=homeowner"
-                className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
-              >
-                Homeowner Login
-              </Link>
-
-              <details className="relative group">
-                <summary className="list-none cursor-pointer select-none rounded-full bg-white px-3 py-1.5 text-sm text-slate-900 hover:bg-white/90">
-                  Pro Login
-                </summary>
-                <div
-                  className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/20 bg-white/95 text-slate-900 shadow-lg"
-                >
-                  <Link
-                    href="/login?role=realtor"
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                  >
-                    Realtor
-                  </Link>
-                  <Link
-                    href="/login?role=inspector"
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                  >
-                    Inspector
-                  </Link>
-                  <Link
-                    href="/login?role=contractor"
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
-                  >
-                    Contractor
-                  </Link>
-                </div>
-              </details>
-            </>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 backdrop-blur-sm"
+            >
+              Login
+            </Link>
           )}
         </div>
 
@@ -172,32 +140,12 @@ export function TopBar({
                     </button>
                   </>
                 ) : (
-                  <>
-                    <Link
-                      href="/login?role=homeowner"
-                      className="col-span-2 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
-                    >
-                      Homeowner Login
-                    </Link>
-                    <Link
-                      href="/login?role=realtor"
-                      className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
-                    >
-                      Realtor
-                    </Link>
-                    <Link
-                      href="/login?role=inspector"
-                      className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
-                    >
-                      Inspector
-                    </Link>
-                    <Link
-                      href="/login?role=contractor"
-                      className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
-                    >
-                      Contractor
-                    </Link>
-                  </>
+                  <Link
+                    href="/login"
+                    className="col-span-2 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+                  >
+                    Login
+                  </Link>
                 )}
               </div>
             </div>

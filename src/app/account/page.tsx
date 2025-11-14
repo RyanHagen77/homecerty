@@ -222,8 +222,8 @@ export default function AccountPage() {
           </p>
           <button
             onClick={() => {
-              if (confirm("Are you sure you want to delete your account? This cannot be undone.")) {
-                // TODO: Implement account deletion
+              if (confirm("Are you sure you want to delete your profile? This cannot be undone.")) {
+                // TODO: Implement profile deletion
                 alert("Account deletion not yet implemented");
               }
             }}
