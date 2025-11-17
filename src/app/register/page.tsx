@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 type RegisterForm = {
@@ -17,7 +17,7 @@ type InvitationData = {
   message?: string | null;
 };
 
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -54,7 +54,6 @@ export default function RegisterPage() {
         }
 
         if (!isCancelled) {
-          // Pre-fill email and name if provided
           setForm((prev) => ({
             ...prev,
             email: data.invitedEmail ?? "",
@@ -62,7 +61,7 @@ export default function RegisterPage() {
           }));
           setInvitationData(data);
         }
-      } catch (error: unknown) {
+      } catch {
         if (!isCancelled) {
           setMsg("Failed to load invitation");
         }
@@ -87,7 +86,7 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          invitationToken: token ?? undefined, // avoid sending null
+          invitationToken: token ?? undefined,
         }),
       });
 
@@ -98,9 +97,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // Success - redirect to login
       window.location.href = "/login";
-    } catch (error: unknown) {
+    } catch {
       setMsg("Registration failed");
       setLoading(false);
     }
@@ -147,7 +145,7 @@ export default function RegisterPage() {
             setForm((prev) => ({ ...prev, email: e.target.value }))
           }
           required
-          disabled={!!invitationData} // Disable if from invitation
+          disabled={!!invitationData}
         />
         <input
           className="w-full rounded border p-2"
@@ -182,5 +180,13 @@ export default function RegisterPage() {
         </a>
       </p>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <RegisterForm />
+    </Suspense>
   );
 }
