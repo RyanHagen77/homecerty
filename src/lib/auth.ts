@@ -124,13 +124,17 @@ export const authConfig: NextAuthOptions = {
   },
 
   events: {
-    // Keep hook available for future use — disable lint locally
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async createUser(_event) {
       /* optionally seed defaults */
     },
   },
 };
 
-// Export the auth handlers
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+// Create NextAuth instance
+const nextAuth = NextAuth(authConfig);
+
+// Export handlers and auth separately
+export const handlers = nextAuth.handlers;
+export const auth = nextAuth.auth;
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;
