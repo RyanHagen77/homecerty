@@ -1,9 +1,7 @@
 // app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth";
+import { handlers } from "@/lib/auth";
 
-export const runtime = "nodejs";          // ✅ force Node (not Edge)
-export const dynamic = "force-dynamic";   // avoids static bundling
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const handler = NextAuth(authConfig);
-export { handler as GET, handler as POST };
+export const { GET, POST } = handlers;
