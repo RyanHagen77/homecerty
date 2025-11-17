@@ -1,4 +1,3 @@
-// src/app/home/page.tsx
 import "server-only";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -8,9 +7,20 @@ import HomePreClaim from "./_components/HomePreClaim";
 
 export const dynamic = "force-dynamic";
 
+type SessionUser = {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+  proStatus?: string | null;
+};
+
 export default async function HomeIndex() {
   const session = await getServerSession(authConfig);
-  const userId = (session?.user as any)?.id as string | undefined;
+
+  const userId = session?.user
+    ? (session.user as SessionUser).id
+    : undefined;
 
   if (userId) {
     const user = await prisma.user.findUnique({
@@ -36,9 +46,9 @@ export default async function HomeIndex() {
       homeId = shared?.homeId ?? null;
     }
 
-    if (homeId) redirect(`/home/${homeId}`);
+    if (homeId) return redirect(`/home/${homeId}`);
   }
 
-  // Not logged in or no claimed home → show pre-claim dummy UI
+  // Not logged in or no claimed home → show pre-claim UI
   return <HomePreClaim />;
 }

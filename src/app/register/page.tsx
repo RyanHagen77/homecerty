@@ -1,45 +1,82 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+
+type RegisterForm = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+type InvitationData = {
+  invitedEmail: string;
+  invitedName?: string | null;
+  inviterName?: string | null;
+  inviterCompany?: string | null;
+  message?: string | null;
+};
 
 export default function RegisterPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState<RegisterForm>({
+    name: "",
+    email: "",
+    password: "",
+  });
+
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [invitationData, setInvitationData] = useState<any>(null);
+  const [invitationData, setInvitationData] = useState<InvitationData | null>(
+    null,
+  );
 
   // Fetch invitation details if token exists
   useEffect(() => {
-    if (token) {
-      fetchInvitationDetails(token);
-    }
+    if (!token) return;
+
+    let isCancelled = false;
+
+    const fetchInvitationDetails = async () => {
+      try {
+        const response = await fetch(`/api/invitations/${token}`);
+        const data = (await response.json()) as InvitationData & {
+          error?: string;
+        };
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setMsg(data.error || "Invalid invitation link");
+          }
+          return;
+        }
+
+        if (!isCancelled) {
+          // Pre-fill email and name if provided
+          setForm((prev) => ({
+            ...prev,
+            email: data.invitedEmail ?? "",
+            name: data.invitedName ?? "",
+          }));
+          setInvitationData(data);
+        }
+      } catch (error: unknown) {
+        if (!isCancelled) {
+          setMsg("Failed to load invitation");
+        }
+      }
+    };
+
+    fetchInvitationDetails();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [token]);
 
-  async function fetchInvitationDetails(token: string) {
-    try {
-      const response = await fetch(`/api/invitations/${token}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        // Pre-fill email and name if provided
-        setForm({
-          ...form,
-          email: data.invitedEmail,
-          name: data.invitedName || "",
-        });
-        setInvitationData(data);
-      } else {
-        setMsg(data.error || "Invalid invitation link");
-      }
-    } catch (error) {
-      setMsg("Failed to load invitation");
-    }
-  }
-
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMsg(null);
     setLoading(true);
@@ -50,12 +87,12 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          invitationToken: token, // Pass token to register API
+          invitationToken: token ?? undefined, // avoid sending null
         }),
       });
 
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
         setMsg(j.error || "Failed to register");
         setLoading(false);
         return;
@@ -63,24 +100,25 @@ export default function RegisterPage() {
 
       // Success - redirect to login
       window.location.href = "/login";
-    } catch (error) {
+    } catch (error: unknown) {
       setMsg("Registration failed");
       setLoading(false);
     }
   }
 
   return (
-    <main className="mx-auto max-w-md p-6 space-y-4">
+    <main className="mx-auto max-w-md space-y-4 p-6">
       {invitationData && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-900">
             <strong>{invitationData.inviterName}</strong>
-            {invitationData.inviterCompany && ` (${invitationData.inviterCompany})`} has
-            invited you to join MyHomeDox
+            {invitationData.inviterCompany &&
+              ` (${invitationData.inviterCompany})`}{" "}
+            has invited you to join MyHomeDox
           </p>
           {invitationData.message && (
-            <p className="text-sm text-blue-700 mt-2 italic">
-              "{invitationData.message}"
+            <p className="mt-2 text-sm italic text-blue-700">
+              &quot;{invitationData.message}&quot;
             </p>
           )}
         </div>
@@ -92,35 +130,46 @@ export default function RegisterPage() {
 
       <form onSubmit={onSubmit} className="space-y-3">
         <input
-          className="w-full border rounded p-2"
+          className="w-full rounded border p-2"
           placeholder="Name"
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, name: e.target.value }))
+          }
           required
         />
         <input
-          className="w-full border rounded p-2"
+          className="w-full rounded border p-2"
           type="email"
           placeholder="Email"
           value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, email: e.target.value }))
+          }
           required
           disabled={!!invitationData} // Disable if from invitation
         />
         <input
-          className="w-full border rounded p-2"
+          className="w-full rounded border p-2"
           type="password"
           placeholder="Password (min 8)"
           value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, password: e.target.value }))
+          }
           required
           minLength={8}
         />
         <button
-          className="w-full rounded p-2 bg-black text-white disabled:opacity-50"
+          className="w-full rounded bg-black p-2 text-white disabled:opacity-50"
           disabled={loading}
+          type="submit"
         >
-          {loading ? "Creating profile..." : invitationData ? "Accept & Create Account" : "Create profile"}
+          {loading
+            ? "Creating profile..."
+            : invitationData
+            ? "Accept & Create Account"
+            : "Create profile"}
         </button>
       </form>
 

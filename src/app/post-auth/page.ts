@@ -2,15 +2,29 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Role, ProStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+type SessionUser = {
+  id: string;
+  role?: Role | null;
+  proStatus?: ProStatus | null;
+  email?: string | null;
+  name?: string | null;
+};
+
 export default async function PostAuth() {
   const session = await getServerSession(authConfig);
+
   if (!session?.user) redirect("/login");
-  const userId = (session.user as any).id as string;
+
+  // Instead of (session.user as any)
+  const userId = (session.user as SessionUser).id;
+
+  if (!userId) redirect("/login");
 
   // Always trust DB for role
   const user = await prisma.user.findUnique({
@@ -18,24 +32,34 @@ export default async function PostAuth() {
     select: { role: true, proStatus: true },
   });
 
-  // Admin users
-  if (user?.role === "ADMIN") redirect("/admin");
-
-  // Pro users
-  if (user?.role === "PRO") {
-    if (user.proStatus === "PENDING") {
-      redirect("/pro/dashboard"); // Shows pending-work-records view
-    }
-    if (user.proStatus === "APPROVED") {
-      redirect("/pro/dashboard"); // Shows full dashboard
-    }
-    if (user.proStatus === "REJECTED") {
-      redirect("/pro/rejected"); // Optional: create rejection page
-    }
-    // Fallback for pros with no status
-    redirect("/pro/dashboard");
+  /** --------------------------
+   *  Admin
+   * --------------------------- */
+  if (user?.role === "ADMIN") {
+    redirect("/admin");
   }
 
-  // Homeowners go to /home; that page will self-redirect if they already claimed
+  /** --------------------------
+   *  PRO Users
+   * --------------------------- */
+if (user?.role === "PRO") {
+  switch (user.proStatus) {
+    case "PENDING":
+      return redirect("/pro/dashboard");
+
+    case "APPROVED":
+      return redirect("/pro/dashboard");
+
+    case "REJECTED":
+      return redirect("/pro/rejected");
+
+    default:
+      return redirect("/pro/dashboard");
+  }
+}
+
+  /** --------------------------
+   *  Homeowners
+   * --------------------------- */
   redirect("/home");
 }
