@@ -168,6 +168,8 @@ model User {
   // Connections
   connectionsAsHomeowner  Connection[] @relation("ConnectionHomeowner")
   connectionsAsContractor Connection[] @relation("ConnectionContractor")
+  connectionsAsRealtor    Connection[] @relation("ConnectionRealtor")
+  connectionsAsInspector  Connection[] @relation("ConnectionInspector")
 
   // Work invitation relations
   workInvitationsSent         WorkInvitation[] @relation("WorkInvitationsSent")
@@ -497,7 +499,9 @@ model HomeAccess {
 model Connection {
   id           String           @id @default(cuid())
   homeownerId  String
-  contractorId String
+  contractorId String?
+  realtorId    String?
+  inspectorId  String?
   homeId       String
   status       ConnectionStatus @default(PENDING)
   invitedBy    String
@@ -517,9 +521,11 @@ model Connection {
   notes String?
   tags  String[] @default([])
 
-  homeowner  User @relation("ConnectionHomeowner", fields: [homeownerId], references: [id], onDelete: Cascade)
-  contractor User @relation("ConnectionContractor", fields: [contractorId], references: [id], onDelete: Cascade)
-  home       Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  homeowner  User  @relation("ConnectionHomeowner", fields: [homeownerId], references: [id], onDelete: Cascade)
+  contractor User? @relation("ConnectionContractor", fields: [contractorId], references: [id], onDelete: Cascade)
+  realtor    User? @relation("ConnectionRealtor", fields: [realtorId], references: [id], onDelete: Cascade)
+  inspector  User? @relation("ConnectionInspector", fields: [inspectorId], references: [id], onDelete: Cascade)
+  home       Home  @relation(fields: [homeId], references: [id], onDelete: Cascade)
 
   messages Message[]
   threads  Thread[]

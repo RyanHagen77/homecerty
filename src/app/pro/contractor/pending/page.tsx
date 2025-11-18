@@ -35,7 +35,7 @@ export default async function ContractorPendingPage() {
     redirect("/pro/contractor/dashboard");
   }
 
-  // If rejected, show rejection message
+  // If rejected, show rejection messages
   if (user?.proStatus === "REJECTED") {
     return (
       <main className="relative min-h-screen text-white">

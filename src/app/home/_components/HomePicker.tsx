@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ClaimHomeModal } from "./ClaimHomeModal";
+import { UnreadMessageBadgeHomeowner } from "./UnreadMessageBadgeHomeowner";
 
 type Home = {
   id: string;
@@ -88,6 +89,9 @@ export function HomePicker({
           <span className="flex-1 min-w-0 truncate text-left">
             {displayAddress}
           </span>
+
+          {/* Unread Message Badge */}
+          <UnreadMessageBadgeHomeowner />
 
           <svg
             xmlns="http://www.w3.org/2000/svg"

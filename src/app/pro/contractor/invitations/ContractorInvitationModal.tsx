@@ -65,7 +65,7 @@ async function handleSubmit() {
         (payload && (payload.error as string)) ||
         "Failed to send invitation";
 
-      // Known validation / duplicate cases: just show message, don't throw
+      // Known validation / duplicate cases: just show messages, don't throw
       if (response.status === 400 || response.status === 409) {
         toast(msg);
         return;

@@ -13,8 +13,8 @@ type ConnectionsModalProps = {
   loadingWork: boolean;
   pendingInvitationsCount: number;
   loadingInvites: boolean;
-  onOpenShare: () => void;
-  onOpenVendors: () => void;
+  onOpenShareAction: () => void;
+  onOpenVendorsAction: () => void;
 };
 
 export function ConnectionsModal({
@@ -25,8 +25,8 @@ export function ConnectionsModal({
   loadingWork,
   pendingInvitationsCount,
   loadingInvites,
-  onOpenShare,
-  onOpenVendors,
+  onOpenShareAction,
+  onOpenVendorsAction,
 }: ConnectionsModalProps) {
   if (!open) return null;
 
@@ -52,9 +52,11 @@ export function ConnectionsModal({
                 received.
               </p>
             </div>
-            <span className="ml-3 rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-200">
-              {loadingInvites ? "—" : `${pendingInvitationsCount} pending`}
-            </span>
+            {pendingInvitationsCount > 0 && (
+              <span className="ml-3 rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-200">
+                {loadingInvites ? "—" : `${pendingInvitationsCount} pending`}
+              </span>
+            )}
           </Link>
 
           {/* Work - Updated to go to /work page */}
@@ -69,15 +71,17 @@ export function ConnectionsModal({
                 Request service, review pending work, and find new pros.
               </p>
             </div>
-            <span className="ml-3 rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-200">
-              {loadingWork ? "—" : `${pendingWorkCount} items`}
-            </span>
+            {pendingWorkCount > 0 && (
+              <span className="ml-3 rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-200">
+                {loadingWork ? "—" : `${pendingWorkCount} items`}
+              </span>
+            )}
           </Link>
 
           {/* Share access */}
           <button
             type="button"
-            onClick={onOpenShare}
+            onClick={onOpenShareAction}
             className={`${glass} flex w-full items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-left hover:bg-white/10`}
           >
             <div>
@@ -91,7 +95,7 @@ export function ConnectionsModal({
           {/* Find vendors */}
           <button
             type="button"
-            onClick={onOpenVendors}
+            onClick={onOpenVendorsAction}
             className={`${glass} flex w-full items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-left hover:bg-white/10`}
           >
             <div>

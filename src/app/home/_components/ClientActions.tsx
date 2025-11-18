@@ -48,6 +48,8 @@ export default function ClientActions({ homeId }: { homeId: string }) {
   const [loadingPending, setLoadingPending] = useState(true);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const [loadingInvitations, setLoadingInvitations] = useState(true);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [loadingMessages, setLoadingMessages] = useState(true);
 
   /* ---------- Fetch pending work count ---------- */
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function ClientActions({ homeId }: { homeId: string }) {
       try {
         const res = await fetch(`/api/home/${homeId}/invitations?status=PENDING`);
         if (res.ok) {
-          const data = (await res.json()) as InvitationResponse; // ✅ Fixed: typed as InvitationResponse
+          const data = (await res.json()) as InvitationResponse;
           const sentCount = data.sentInvitations?.filter((inv) => inv.status === 'PENDING').length || 0;
           const receivedCount = data.receivedInvitations?.filter((inv) => inv.status === 'PENDING').length || 0;
           setPendingInvitationsCount(sentCount + receivedCount);
@@ -103,8 +105,32 @@ export default function ClientActions({ homeId }: { homeId: string }) {
       }
     }
 
-    void fetchPendingInvitations(); // ✅ Fixed: explicitly ignore promise
+    void fetchPendingInvitations();
   }, [homeId]);
+
+  /* ---------- Fetch unread messages count ---------- */
+  useEffect(() => {
+    async function fetchUnreadMessages() {
+      console.log("[ClientActions] Fetching unread messages...");
+      try {
+        const res = await fetch("/api/messages/unread");
+        console.log("[ClientActions] Unread API status:", res.status);
+        if (res.ok) {
+          const data = await res.json();
+          console.log("[ClientActions] Unread data:", data);
+          setUnreadMessagesCount(data.total || 0);
+        } else {
+          console.error("[ClientActions] Unread API failed:", res.status);
+        }
+      } catch (error) {
+        console.error("Error fetching unread messages:", error);
+      } finally {
+        setLoadingMessages(false);
+      }
+    }
+
+    void fetchUnreadMessages();
+  }, []);
 
   /* ---------- API Helpers ---------- */
   async function createRecord(payload: {
@@ -300,10 +326,6 @@ export default function ClientActions({ homeId }: { homeId: string }) {
     router.refresh();
   }
 
-  const attentionCount =
-    (loadingInvitations ? 0 : pendingInvitationsCount) +
-    (loadingPending ? 0 : pendingWorkCount);
-
   /* ---------- UI ---------- */
   return (
     <>
@@ -312,16 +334,31 @@ export default function ClientActions({ homeId }: { homeId: string }) {
           + Add Record
         </button>
 
-        {/* Unified Connections Button */}
+        {/* Messages Button with Badge */}
+        <Link
+          href={`/home/${homeId}/messages`}
+          className={`${ctaGhost} relative`}
+        >
+          Messages
+          {unreadMessagesCount > 0 && (
+            <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+              {unreadMessagesCount}
+            </span>
+          )}
+          {/* Debug: Show count always */}
+          <span className="ml-2 text-xs text-white/50">({unreadMessagesCount})</span>
+        </Link>
+
+        {/* Connections Button - only invitations + work */}
         <button
           type="button"
           onClick={() => setConnectionsOpen(true)}
           className={`${ctaGhost} relative`}
         >
           Connections
-          {attentionCount > 0 && (
+          {(pendingInvitationsCount + pendingWorkCount) > 0 && (
             <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-              {attentionCount}
+              {pendingInvitationsCount + pendingWorkCount}
             </span>
           )}
         </button>
@@ -363,11 +400,11 @@ export default function ClientActions({ homeId }: { homeId: string }) {
         loadingWork={loadingPending}
         pendingInvitationsCount={pendingInvitationsCount}
         loadingInvites={loadingInvitations}
-        onOpenShare={() => {
+        onOpenShareAction={() => {
           setConnectionsOpen(false);
           setShareOpen(true);
         }}
-        onOpenVendors={() => {
+        onOpenVendorsAction={() => {
           setConnectionsOpen(false);
           setFindVendorsOpen(true);
         }}

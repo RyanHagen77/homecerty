@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { glass, heading, textMeta } from "@/lib/glass";
+import { UnreadMessageBadge } from "./UnreadMessageBadge";
 
 export function ContractorContextBar() {
   const pathname = usePathname();
@@ -14,6 +15,7 @@ export function ContractorContextBar() {
   const links = [
     { href: "/pro/contractor/dashboard", label: "Dashboard" },
     { href: "#connects", label: "Connects", modal: true },
+    { href: "/pro/messages", label: "Messages", showBadge: true },
     { href: "/pro/contractor/analytics", label: "Analytics" },
     { href: "/pro/contractor/profile", label: "Profile" },
   ];
@@ -54,7 +56,10 @@ export function ContractorContextBar() {
                     : `${base} bg-white/5 text-white/85 hover:bg-white/15`
                 }
               >
-                {link.label}
+                <span className="inline-flex items-center gap-1.5">
+                  {link.label}
+                  {link.showBadge && <UnreadMessageBadge />}
+                </span>
               </Link>
             );
           })}

@@ -132,7 +132,7 @@ export function ClaimHomeModal({
               records once it&apos;s claimed.
             </p>
 
-            {/* Error message */}
+            {/* Error messages */}
             {error && (
               <div className="rounded-lg border border-red-400/30 bg-red-400/10 p-4">
                 <div className="flex items-start gap-3">
