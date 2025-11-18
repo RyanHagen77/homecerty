@@ -228,7 +228,7 @@ export function GlobalHeader({
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 backdrop-blur-sm"
+                className="hidden md:inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 backdrop-blur-sm"
               >
                 Login
               </Link>
@@ -306,9 +306,33 @@ export function GlobalHeader({
                       <div className="col-span-2 py-1 text-center text-sm text-white/85">
                         {session?.user?.email}
                       </div>
+
                       <button
                         className="col-span-2 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
-                        onClick={() => signOut({ callbackUrl: "/login" })}
+                        onClick={() => {
+                          setOpen(false);
+                          router.push("/account");
+                        }}
+                      >
+                        Account settings
+                      </button>
+
+                      <button
+                        className="col-span-2 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+                        onClick={() => {
+                          setOpen(false);
+                          setClaimOpen(true);
+                        }}
+                      >
+                        Add new home
+                      </button>
+
+                      <button
+                        className="col-span-2 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+                        onClick={() => {
+                          setOpen(false);
+                          signOut({ callbackUrl: "/login" });
+                        }}
                       >
                         Sign out
                       </button>
