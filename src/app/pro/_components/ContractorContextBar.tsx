@@ -25,10 +25,10 @@ export function ContractorContextBar() {
     <>
       <div className="mx-auto max-w-7xl px-6 pt-3 pb-2">
         {/* pill rail */}
-        <nav className="inline-flex flex-wrap items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-1.5 py-1.5 backdrop-blur-sm">
+        <nav className="inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-1.5 py-1.5 backdrop-blur-sm w-full sm:w-auto">
           {links.map((link) => {
             const base =
-              "rounded-full px-3 py-1.5 text-xs sm:text-sm transition-colors";
+              "rounded-full px-3 py-1.5 text-xs sm:text-sm transition-colors whitespace-nowrap";
 
             if (link.modal) {
               // Connects pill – treat like an inactive tab
@@ -37,7 +37,7 @@ export function ContractorContextBar() {
                   key="connects"
                   type="button"
                   onClick={() => setConnectsOpen(true)}
-                  className={`${base} bg-white/5 text-white/85 hover:bg-white/15`}
+                  className={`${base} bg-white/5 text-white/85 hover:bg-white/15 relative`}
                 >
                   <span className="inline-flex items-center gap-1.5">
                     Connects

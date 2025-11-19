@@ -128,46 +128,46 @@ export default async function ProDashboardPage() {
           </div>
         </section>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className={glass}>
-            <p className={`text-sm font-medium ${textMeta}`}>Avg Rating</p>
-            <p className={`mt-2 text-3xl font-bold ${heading}`}>
+{/* Stats - More compact on mobile */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className={`${glass} py-3 sm:py-4`}>
+            <p className={`text-xs sm:text-sm font-medium ${textMeta}`}>Avg Rating</p>
+            <p className={`mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold ${heading}`}>
               {proProfile?.rating ? proProfile.rating.toFixed(1) : "5.0"}{" "}
-              <span className="text-base align-middle">★</span>
+              <span className="text-sm sm:text-base align-middle">★</span>
             </p>
-            <p className="mt-1 text-xs text-white/60">
-              {proProfile?.rating ? "Based on homeowner reviews" : "Starting rating"}
+            <p className="mt-0.5 sm:mt-1 text-xs text-white/60">
+              {proProfile?.rating ? "Based on reviews" : "Starting rating"}
             </p>
           </div>
 
-          <div className={glass}>
-            <p className={`text-sm font-medium ${textMeta}`}>This Month</p>
-            <p className={`mt-2 text-3xl font-bold ${heading}`}>
+          <div className={`${glass} py-3 sm:py-4`}>
+            <p className={`text-xs sm:text-sm font-medium ${textMeta}`}>This Month</p>
+            <p className={`mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold ${heading}`}>
               {workRecordsThisMonth}
             </p>
-            <p className="mt-1 text-xs text-white/60">
-              Work records documented
+            <p className="mt-0.5 sm:mt-1 text-xs text-white/60">
+              Records
             </p>
           </div>
 
-          <div className={glass}>
-            <p className={`text-sm font-medium ${textMeta}`}>Verified Work</p>
-            <p className={`mt-2 text-3xl font-bold ${heading}`}>
+          <div className={`${glass} py-3 sm:py-4`}>
+            <p className={`text-xs sm:text-sm font-medium ${textMeta}`}>Verified Work</p>
+            <p className={`mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold ${heading}`}>
               {totalVerified}
             </p>
-            <p className="mt-1 text-xs text-white/60">
-              Approved by homeowners
+            <p className="mt-0.5 sm:mt-1 text-xs text-white/60">
+              Approved
             </p>
           </div>
 
-          <div className={glass}>
-            <p className={`text-sm font-medium ${textMeta}`}>Properties</p>
-            <p className={`mt-2 text-3xl font-bold ${heading}`}>
+          <div className={`${glass} py-3 sm:py-4`}>
+            <p className={`text-xs sm:text-sm font-medium ${textMeta}`}>Properties</p>
+            <p className={`mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold ${heading}`}>
               {connections.length}
             </p>
-            <p className="mt-1 text-xs text-white/60">
-              Active connections
+            <p className="mt-0.5 sm:mt-1 text-xs text-white/60">
+              Active
             </p>
           </div>
         </div>

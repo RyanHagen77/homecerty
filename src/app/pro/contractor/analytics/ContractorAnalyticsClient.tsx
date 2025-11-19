@@ -12,6 +12,9 @@ import {
   ctaGhost,
 } from "@/lib/glass";
 
+import { InviteHomeownerButton } from "../../_components/InviteHomeownerButton";
+
+
 type ContractorAnalyticsClientProps = {
   businessName: string | null;
   proType: "CONTRACTOR" | "REALTOR" | "INSPECTOR" | null;
@@ -64,12 +67,7 @@ export default function ContractorAnalyticsClient(
             >
               + Document Work
             </Link>
-            <Link
-              href="/pro/contractor/invitations"
-              className={`${ctaGhost} px-4 py-2 text-sm`}
-            >
-              Invite Homeowner
-            </Link>
+            <InviteHomeownerButton />
           </div>
         </div>
       </section>
