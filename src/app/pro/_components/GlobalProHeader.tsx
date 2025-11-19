@@ -53,6 +53,9 @@ export function GlobalProHeader({
   const userInitial =
     session?.user?.name?.[0] ?? session?.user?.email?.[0] ?? "U";
 
+  // Pro header always goes to contractor dashboard
+  const logoHref = "/pro/contractor/dashboard";
+
   return (
     <div
       className={`sticky top-0 z-40 transition-colors ${
@@ -63,7 +66,7 @@ export function GlobalProHeader({
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:py-5 text-white">
         {/* Logo */}
         <Link
-          href="/pro/contractor/dashboard"
+          href={logoHref}
           className="inline-flex items-center gap-3 shrink-0"
           aria-label={srBrand}
         >
@@ -156,7 +159,7 @@ export function GlobalProHeader({
                           <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4s-4 1.79-4 4 1.79 4 4 4z" />
                           <path d="M6 20c0-2.21 2.686-4 6-4s6 1.79 6 4" />
                         </svg>
-                        Pro account settings
+                        Profile
                       </button>
 
                       <button
@@ -273,7 +276,7 @@ export function GlobalProHeader({
                         router.push("/pro/contractor/profile");
                       }}
                     >
-                      Pro account settings
+                      Profile
                     </button>
 
                     <button
