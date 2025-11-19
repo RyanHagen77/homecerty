@@ -13,6 +13,12 @@ type Home = {
   zip: string | null;
 };
 
+type HomeStats = {
+  homeId: string;
+  unreadMessages: number;
+  pendingInvitations: number;
+};
+
 export function HomePicker({
   currentHomeId,
   initialAddress,
@@ -23,6 +29,7 @@ export function HomePicker({
   const router = useRouter();
 
   const [homes, setHomes] = React.useState<Home[]>([]);
+  const [homeStats, setHomeStats] = React.useState<HomeStats[]>([]);
   const [open, setOpen] = React.useState(false);
   const [claimOpen, setClaimOpen] = React.useState(false);
 
@@ -37,8 +44,45 @@ export function HomePicker({
         console.error("Failed to fetch homes", err);
       }
     }
-    fetchHomes();
+    void fetchHomes();
   }, []);
+
+  // Fetch per-home stats when dropdown opens
+  React.useEffect(() => {
+    if (!open || homes.length === 0) return;
+
+    async function fetchHomeStats() {
+      try {
+        // Fetch stats for each home
+        const statsPromises = homes.map(async (home) => {
+          const [messagesRes, invitesRes] = await Promise.all([
+            fetch(`/api/home/${home.id}/messages/unread`),
+            fetch(`/api/home/${home.id}/invitations?status=PENDING`),
+          ]);
+
+          const messagesData = messagesRes.ok ? await messagesRes.json() : { total: 0 };
+          const invitesData = invitesRes.ok ? await invitesRes.json() : {};
+
+          const pendingInvites =
+            (invitesData.sentInvitations?.filter((inv: { status: string }) => inv.status === 'PENDING').length || 0) +
+            (invitesData.receivedInvitations?.filter((inv: { status: string }) => inv.status === 'PENDING').length || 0);
+
+          return {
+            homeId: home.id,
+            unreadMessages: messagesData.total || 0,
+            pendingInvitations: pendingInvites,
+          };
+        });
+
+        const stats = await Promise.all(statsPromises);
+        setHomeStats(stats);
+      } catch (err) {
+        console.error("Failed to fetch home stats", err);
+      }
+    }
+
+    void fetchHomeStats();
+  }, [open, homes]);
 
   const currentHome =
     homes.find((h) => h.id === currentHomeId) ||
@@ -73,6 +117,14 @@ export function HomePicker({
     router.push(`/home/${homeId}`);
   }
 
+  function getStatsForHome(homeId: string) {
+    return homeStats.find((s) => s.homeId === homeId) || {
+      homeId,
+      unreadMessages: 0,
+      pendingInvitations: 0
+    };
+  }
+
   return (
     <>
       {/* wrapper gets its own stack level */}
@@ -90,7 +142,7 @@ export function HomePicker({
             {displayAddress}
           </span>
 
-          {/* Unread Message Badge */}
+          {/* Total Unread Badge */}
           <UnreadMessageBadgeHomeowner />
 
           <svg
@@ -118,7 +170,7 @@ export function HomePicker({
             {/* dropdown itself */}
             <div
               className="absolute left-0 top-full z-[50] mt-2
-                         w-[min(320px,calc(100vw-3rem))]
+                         w-[min(420px,calc(100vw-3rem))]
                          rounded-2xl border border-white/15 bg-black/90
                          backdrop-blur-xl shadow-2xl"
             >
@@ -131,6 +183,9 @@ export function HomePicker({
               <div className="max-h-72 space-y-1 overflow-y-auto px-2 py-2">
                 {homes.map((home) => {
                   const isCurrent = home.id === currentHomeId;
+                  const stats = getStatsForHome(home.id);
+                  const hasActivity = stats.unreadMessages > 0 || stats.pendingInvitations > 0;
+
                   return (
                     <button
                       key={home.id}
@@ -142,14 +197,34 @@ export function HomePicker({
                           : "bg-white/5 border-transparent hover:bg-white/10"
                       }`}
                     >
-                      <p className="truncate text-white">
-                        {formatAddress(home)}
-                      </p>
-                      {isCurrent && (
-                        <p className="mt-1 text-xs text-emerald-300">
-                          Current home
-                        </p>
-                      )}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-white">
+                            {formatAddress(home)}
+                          </p>
+                          {isCurrent && (
+                            <p className="mt-1 text-xs text-emerald-300">
+                              Current home
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Per-home badges */}
+                        {hasActivity && (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {stats.unreadMessages > 0 && (
+                              <span className="inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-orange-500 px-2 text-xs font-bold text-white">
+                                {stats.unreadMessages}
+                              </span>
+                            )}
+                            {stats.pendingInvitations > 0 && (
+                              <span className="inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-blue-500 px-2 text-xs font-bold text-white">
+                                {stats.pendingInvitations}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -183,7 +258,7 @@ export function HomePicker({
         open={claimOpen}
         onCloseAction={() => {
           setClaimOpen(false);
-          fetch("/api/user/homes")
+          void fetch("/api/user/homes")
             .then((res) => res.json())
             .then((data) => setHomes(data.homes || []))
             .catch(console.error);
