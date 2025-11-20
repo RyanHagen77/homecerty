@@ -328,29 +328,27 @@ useEffect(() => {
           )}
         </Link>
 
-        {/* Connections Button - invitations + document-completed-work-submissions with separate badges */}
-        <button
-          type="button"
-          onClick={() => setConnectionsOpen(true)}
-          className={`${ctaGhost} relative whitespace-nowrap text-sm w-full sm:w-auto`}
-        >
-          <span className="hidden sm:inline">Connect</span>
-          <span className="inline sm:hidden">Connect</span>
-          {(pendingInvitationsCount > 0 || pendingWorkCount > 0) && (
-            <span className="ml-1.5 inline-flex items-center gap-1">
-              {pendingInvitationsCount > 0 && (
-                <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500 px-1.5 text-xs font-bold text-white">
-                  {pendingInvitationsCount}
-                </span>
-              )}
-              {pendingWorkCount > 0 && (
-                <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#33C17D] px-1.5 text-xs font-bold text-white">
-                  {pendingWorkCount}
-                </span>
-              )}
-            </span>
-          )}
-        </button>
+      <button
+        type="button"
+        onClick={() => setConnectionsOpen(true)}
+        className={`${ctaGhost} relative whitespace-nowrap text-sm w-full sm:w-auto`}
+      >
+        Connect
+        {(pendingInvitationsCount > 0 || pendingWorkCount > 0) && (
+          <span className="ml-1.5 inline-flex items-center gap-1">
+            {pendingInvitationsCount > 0 && (
+              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500 px-1.5 text-xs font-bold text-white">
+                {pendingInvitationsCount}
+              </span>
+            )}
+            {pendingWorkCount > 0 && (
+              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#33C17D] px-1.5 text-xs font-bold text-white">
+                {pendingWorkCount}
+              </span>
+            )}
+          </span>
+        )}
+      </button>
       </div>
 
     {/* Unified Add Modal */}

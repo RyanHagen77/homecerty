@@ -51,8 +51,8 @@ export default function MainLanding() {
   const hero = React.useMemo(() => {
     if (aud === "home") {
       return {
-        headline: "Your home's report card, built for trust.",
-        sub: "Store repairs, upgrades, reminders and warranties. Share a verified report in one click. Invite professionals to document their document-completed-work-submissions and stay connected.",
+        headline: "Your home’s journal. Organized. Verified.",
+        sub: "Store repairs, upgrades, reminders and warranties. Invite and connect professionals to document their work and stay connected.",
         primary: { label: "Create home record", href: "/home" },
         secondary: { label: "See sample report", href: "/report" },
         showAddress: true,
@@ -139,60 +139,6 @@ export default function MainLanding() {
           <p className="mt-4 max-w-2xl text-base text-white/90 md:text-lg">
             {hero.sub}
           </p>
-
-          {/* CTAs */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <button
-              className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-medium text-white
-                         bg-[rgba(243,90,31,0.85)] hover:bg-[rgba(243,90,31,0.95)]
-                         border border-white/30 backdrop-blur
-                         shadow-[0_8px_24px_rgba(243,90,31,.25)] transition w-full sm:w-auto"
-              onClick={() => router.push(hero.primary.href)}
-            >
-              {hero.primary.label}
-            </button>
-            <button
-              className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-medium
-                         border border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur transition w-full sm:w-auto"
-              onClick={() => router.push(hero.secondary.href)}
-            >
-              {hero.secondary.label}
-            </button>
-          </div>
-
-          {/* Address input */}
-          <div className="mt-8">
-            <div className={hero.showAddress ? "" : "invisible"}>
-              <form
-                onSubmit={onLookup}
-                className="flex w-full max-w-xl items-stretch gap-2 sm:gap-3"
-              >
-                <Input
-                  placeholder="Look up an address (e.g., 2147 Oakview Dr, Austin, TX)"
-                  value={addr}
-                  onChange={(
-                    e: React.ChangeEvent<HTMLInputElement>
-                  ) => setAddr(e.target.value)}
-                  className="h-11 rounded-xl bg-white/95 text-slate-900 placeholder:text-slate-500
-                             ring-1 ring-white/30 focus:ring-2 focus:ring-[#F35A1F]
-                             shadow-[0_2px_12px_rgba(0,0,0,.12)] flex-1"
-                />
-                <Button
-                  type="submit"
-                  disabled={!addr || loading}
-                  className="h-11 rounded-xl px-4 sm:min-w-[112px]
-                             text-white border border-white/30 backdrop-blur
-                             bg-[rgba(243,90,31,0.85)] hover:bg-[rgba(243,90,31,0.95)]
-                             shadow-[0_8px_24px_rgba(243,90,31,.25)] transition"
-                >
-                  {loading ? "Looking…" : "Lookup"}
-                </Button>
-              </form>
-            </div>
-            {error && (
-              <p className="mt-2 text-sm text-red-200">{error}</p>
-            )}
-          </div>
         </div>
       </section>
 
@@ -208,11 +154,11 @@ export default function MainLanding() {
                 ],
                 [
                   "Verified documentation",
-                  "Professionals document their document-completed-work-submissions records directly on your home's record.",
+                  "Professionals document their completed work and add to your home's record.",
                 ],
                 [
-                  "Easy sharing",
-                  "Give access to buyers, agents, or service providers with one link.",
+                  "Home health",
+                  "Use reminders and tools to keep your home healthy.",
                 ],
                 [
                   "Stay connected",
@@ -255,18 +201,18 @@ export default function MainLanding() {
             ? [
                 [
                   "1",
-                  "Create your record",
-                  "Start with your address and we'll help build your home's history.",
+                  "Claim your home",
+                  "Find and verify your address, then claim you home.",
                 ],
                 [
                   "2",
                   "Add documentation",
-                  "Upload receipts and invite professionals to document their document-completed-work-submissions.",
+                  "Create records of finished projects. Upload receipts and manuals. Set maintenance reminders, and add warranties.",
                 ],
                 [
                   "3",
-                  "Share with confidence",
-                  "Give buyers, agents, or contractors secure access when needed.",
+                  "Connect with professionals",
+                  "Invite your trusted contractors. Request service, received verified documentation of completed projects.  Stay connected.",
                 ],
               ]
             : [
