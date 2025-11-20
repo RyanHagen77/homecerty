@@ -1,3 +1,4 @@
+// src/app/login/LoginClient.tsx (or wherever this lives)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -106,9 +107,18 @@ export default function LoginClient() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/70">
-                  Password
-                </label>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-xs text-white/70">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/forgot-password")}
+                    className="text-[11px] text-white/70 hover:text-white underline-offset-2 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <input
                   className="w-full rounded-xl border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/40 outline-none ring-0 focus:border-[#F35A1F]/70 focus:ring-2 focus:ring-[#F35A1F]/30"
                   type="password"
