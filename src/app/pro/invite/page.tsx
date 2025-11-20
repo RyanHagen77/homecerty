@@ -80,7 +80,7 @@ export default function InviteClientPage() {
             Invitation Sent!
           </h2>
           <p className="text-green-700">
-            Your client will receive an email invitation to join MyHomeDox.
+            Your client will receive an email invitation to join Dwella.
           </p>
           <p className="text-sm text-green-600 mt-4">
             Redirecting to your clients page...

@@ -50,7 +50,7 @@ export const authConfig: NextAuthOptions = {
     }),
 
     EmailProvider({
-      from: process.env.EMAIL_FROM ?? "Dwella <no-reply@myhomedox.com>",
+      from: process.env.EMAIL_FROM ?? "Dwella <no-reply@dwella.com>",
       async sendVerificationRequest({ identifier, url, provider }) {
         if (process.env.NODE_ENV !== "production") {
           console.log("[DEV] Magic link:", url);

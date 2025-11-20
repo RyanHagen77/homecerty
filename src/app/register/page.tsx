@@ -18,6 +18,36 @@ type InvitationData = {
   message?: string | null;
 };
 
+// Simple client-side mirror of the server password rules
+function validatePasswordStrengthClient(password: string, email?: string): string | null {
+  if (!password || password.length < 10) {
+    return "Password must be at least 10 characters long.";
+  }
+
+  const hasLetter = /[A-Za-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+
+  if (!hasLetter || !hasNumber) {
+    return "Password must include at least one letter and one number.";
+  }
+
+  const lower = password.toLowerCase();
+  const weakFragments = ["password", "qwerty", "123456", "dwella"];
+
+  if (weakFragments.some((frag) => lower.includes(frag))) {
+    return "Password is too easy to guess. Please choose something more unique.";
+  }
+
+  if (email) {
+    const localPart = email.split("@")[0]?.toLowerCase();
+    if (localPart && lower.includes(localPart)) {
+      return "Password should not contain your email.";
+    }
+  }
+
+  return null;
+}
+
 function RegisterForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -71,6 +101,17 @@ function RegisterForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
+
+    // Client-side password strength check
+    const strengthError = validatePasswordStrengthClient(
+      form.password,
+      form.email
+    );
+    if (strengthError) {
+      setMsg(strengthError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -98,7 +139,7 @@ function RegisterForm() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-4 py-10">
+    <main className="relative flex min-h-screen items-center justify-center px-4 py-10">
       {/* Background */}
       <div className="fixed inset-0 -z-50">
         <Image
@@ -112,7 +153,7 @@ function RegisterForm() {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-md rounded-2xl bg-white/95 shadow-2xl p-8 border border-black/5">
+      <div className="w-full max-w-md rounded-2xl border border-black/5 bg-white/95 p-8 shadow-2xl">
         {/* Logo */}
         <div className="mb-6 flex justify-center">
           <DwellaLogo className="h-8 w-auto" />
@@ -135,16 +176,16 @@ function RegisterForm() {
           </div>
         )}
 
-        <h1 className="text-xl font-semibold text-gray-900 mb-4">
-          {invitationData ? "Accept Invitation" : "Create your Dwella account"}
+        <h1 className="mb-4 text-xl font-semibold text-gray-900">
+          {invitationData ? "Accept invitation" : "Create your Dwella account"}
         </h1>
 
         {/* Form */}
         <form onSubmit={onSubmit} className="space-y-4">
-          {/* Floating input */}
+          {/* Name */}
           <div className="relative">
             <input
-              className="peer w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900 placeholder-transparent focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              className="peer w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900 placeholder-transparent focus:border-orange-400 focus:ring-2 focus:ring-orange-400"
               placeholder="Name"
               value={form.name}
               onChange={(e) =>
@@ -152,14 +193,15 @@ function RegisterForm() {
               }
               required
             />
-            <label className="absolute left-3 top-3 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-orange-600">
+            <label className="absolute left-3 top-3 text-sm text-gray-500 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-orange-600">
               Full name
             </label>
           </div>
 
+          {/* Email */}
           <div className="relative">
             <input
-              className="peer w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900 placeholder-transparent focus:ring-2 focus:ring-orange-400 focus:border-orange-400 disabled:bg-gray-100"
+              className="peer w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900 placeholder-transparent focus:border-orange-400 focus:ring-2 focus:ring-orange-400 disabled:bg-gray-100"
               placeholder="Email"
               type="email"
               value={form.email}
@@ -169,14 +211,15 @@ function RegisterForm() {
               required
               disabled={!!invitationData}
             />
-            <label className="absolute left-3 top-3 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-orange-600">
+            <label className="absolute left-3 top-3 text-sm text-gray-500 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-orange-600">
               Email
             </label>
           </div>
 
+          {/* Password */}
           <div className="relative">
             <input
-              className="peer w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900 placeholder-transparent focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              className="peer w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900 placeholder-transparent focus:border-orange-400 focus:ring-2 focus:ring-orange-400"
               placeholder="Password"
               type="password"
               value={form.password}
@@ -184,23 +227,23 @@ function RegisterForm() {
                 setForm((prev) => ({ ...prev, password: e.target.value }))
               }
               required
-              minLength={8}
+              minLength={10}
             />
-            <label className="absolute left-3 top-3 text-gray-500 text-sm transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-orange-600">
-              Password (min 8)
+            <label className="absolute left-3 top-3 text-sm text-gray-500 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-orange-600">
+              Password (min 10, include a number)
             </label>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full rounded-lg bg-[rgba(243,90,31,0.95)] py-3 text-white font-medium text-sm shadow-lg hover:bg-[rgba(243,90,31,1)] disabled:opacity-60 transition"
+            className="mt-2 w-full rounded-lg bg-[rgba(243,90,31,0.95)] py-3 text-sm font-medium text-white shadow-lg transition hover:bg-[rgba(243,90,31,1)] disabled:opacity-60"
           >
             {loading
               ? "Creating your account..."
               : invitationData
-              ? "Accept & Create Account"
-              : "Create Account"}
+              ? "Accept & create account"
+              : "Create account"}
           </button>
         </form>
 

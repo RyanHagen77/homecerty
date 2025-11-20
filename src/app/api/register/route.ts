@@ -3,11 +3,40 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 
+// --- Password strength validation ---
+function validatePasswordStrength(password: string, email?: string): string | null {
+  if (!password || password.length < 10) {
+    return "Password must be at least 10 characters long.";
+  }
+
+  const hasLetter = /[A-Za-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+
+  if (!hasLetter || !hasNumber) {
+    return "Password must include at least one letter and one number.";
+  }
+
+  const lower = password.toLowerCase();
+  const bannedFragments = ["password", "123456", "qwerty", "dwella"];
+
+  if (bannedFragments.some((frag) => lower.includes(frag))) {
+    return "Password is too easy to guess. Please choose something more unique.";
+  }
+
+  if (email) {
+    const local = email.split("@")[0]?.toLowerCase();
+    if (local && lower.includes(local)) {
+      return "Password cannot contain your email.";
+    }
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const { name, email, password, role, invitationToken } = await req.json();
 
-    // Validate inputs
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password required" },
@@ -15,14 +44,13 @@ export async function POST(req: Request) {
       );
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 }
-      );
+    // --- strong password check ---
+    const strengthError = validatePasswordStrength(password, email);
+    if (strengthError) {
+      return NextResponse.json({ error: strengthError }, { status: 400 });
     }
 
-    // Check if user already exists
+    // Check if existing user
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) {
       return NextResponse.json(
@@ -31,11 +59,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Determine user role
-    let userRole: Role = "HOMEOWNER"; // Default
+    let userRole: Role = "HOMEOWNER";
     let invitation = null;
 
-    // Check invitation if token provided
+    // --- INVITATION FLOW ---
     if (invitationToken) {
       invitation = await prisma.invitation.findUnique({
         where: { token: invitationToken },
@@ -69,95 +96,83 @@ export async function POST(req: Request) {
         );
       }
 
-      // Use role from invitation
+      // Invitations assign roles
       userRole = invitation.role;
-    } else if (role) {
-      // Validate role if provided directly (not from invitation)
-      if (role === "PRO" || role === "HOMEOWNER" || role === "ADMIN") {
-        userRole = role as Role;
-      } else {
+    }
+
+    // --- DIRECT SIGNUP RULE: ONLY HOMEOWNERS ---
+    if (!invitationToken) {
+      if (role && role !== "HOMEOWNER") {
         return NextResponse.json(
-          { error: "Invalid role" },
+          { error: "Only homeowners can sign up directly" },
           { status: 400 }
         );
       }
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
     const user = await prisma.user.create({
       data: {
-        email,
         name: name || null,
+        email,
         passwordHash,
         role: userRole,
-        emailVerified: invitationToken ? new Date() : null, // Auto-verify-document-completed-work-submissions-records if invited
+        emailVerified: new Date(), // until email verification is added
         proStatus: userRole === "PRO" ? "PENDING" : null,
       },
       select: {
         id: true,
         email: true,
-        name: true,
         role: true,
+        name: true,
       },
     });
 
-    // If PRO role, create ProProfile
+    // If PRO, create default profile
     if (userRole === "PRO") {
       await prisma.proProfile.create({
         data: {
           userId: user.id,
-          type: "CONTRACTOR", // Default, they can update later
+          type: "CONTRACTOR",
         },
       });
     }
 
-    // If invitation exists, handle connection creation
+    // Handle invitation → create connection
     if (invitation) {
-      // Mark invitation as accepted
       await prisma.invitation.update({
         where: { id: invitation.id },
         data: { status: "ACCEPTED" },
       });
 
-      // Create connection if homeId was provided
       if (invitation.homeId) {
-        if (invitation.role === "HOMEOWNER") {
-          // PRO invited HOMEOWNER
-          await prisma.connection.create({
-            data: {
-              homeownerId: user.id,
-              contractorId: invitation.invitedBy,
-              homeId: invitation.homeId,
-              status: "ACTIVE",
-              invitedBy: invitation.invitedBy,
-              acceptedAt: new Date(),
-            },
-          });
-        } else if (invitation.role === "PRO") {
-          // HOMEOWNER invited PRO
-          await prisma.connection.create({
-            data: {
-              homeownerId: invitation.invitedBy,
-              contractorId: user.id,
-              homeId: invitation.homeId,
-              status: "ACTIVE",
-              invitedBy: invitation.invitedBy,
-              acceptedAt: new Date(),
-            },
-          });
-        }
+        const isHomeownerInvite = invitation.role === "HOMEOWNER";
+
+        await prisma.connection.create({
+          data: isHomeownerInvite
+            ? {
+                homeownerId: user.id,
+                contractorId: invitation.invitedBy,
+                homeId: invitation.homeId,
+                status: "ACTIVE",
+                invitedBy: invitation.invitedBy,
+                acceptedAt: new Date(),
+              }
+            : {
+                homeownerId: invitation.invitedBy,
+                contractorId: user.id,
+                homeId: invitation.homeId,
+                status: "ACTIVE",
+                invitedBy: invitation.invitedBy,
+                acceptedAt: new Date(),
+              },
+        });
       }
     }
 
-    return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    });
+    return NextResponse.json(user);
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
