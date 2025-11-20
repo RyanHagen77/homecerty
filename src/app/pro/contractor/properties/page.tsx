@@ -16,7 +16,7 @@ export default async function PropertiesPage() {
 
   const userId = session.user.id as string;
 
-  // Get all work for this contractor
+  // Get all document-completed-work-submissions for this contractor
   const connections = await prisma.connection.findMany({
     where: {
       contractorId: userId,
@@ -50,7 +50,7 @@ export default async function PropertiesPage() {
     },
   });
 
-  // Get work-records-records records for these homes
+  // Get document-completed-work-submissions-records-records records for these homes
   const workRecords = await prisma.workRecord.findMany({
     where: {
       contractorId: userId,

@@ -1,4 +1,4 @@
-// app/pro/contractor/work-records/new/page.tsx
+// app/pro/contractor/document-completed-work-submissions-records/new/page.tsx
 export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth";
@@ -25,7 +25,7 @@ export default async function DocumentWorkPage() {
     redirect("/dashboard");
   }
 
-  // Get all ACTIVE work for this contractor
+  // Get all ACTIVE document-completed-work-submissions for this contractor
   const connections = await prisma.connection.findMany({
     where: {
       contractorId: session.user.id,

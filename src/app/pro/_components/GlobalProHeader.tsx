@@ -2,11 +2,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+// Image import no longer needed
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { ctaGhost } from "@/lib/glass";
+import * as React from "react";
 
 export type ProTopBarLink = {
   href: string;
@@ -15,8 +16,8 @@ export type ProTopBarLink = {
 
 export function GlobalProHeader({
   links = [],
-  srBrand = "HomeTrace Pro",
-  logoAlt = "HomeTrace Pro",
+  srBrand = "Dwella Pro",
+  logoAlt = "Dwella Pro",
 }: {
   links?: ProTopBarLink[];
   srBrand?: string;
@@ -64,20 +65,13 @@ export function GlobalProHeader({
     >
       {/* header row */}
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:py-5 text-white">
-        {/* Logo */}
+        {/* Logo (inline Dwella SVG) */}
         <Link
           href={logoHref}
           className="inline-flex items-center gap-3 shrink-0"
           aria-label={srBrand}
         >
-          <Image
-            src="/myhomedox_logo.png"
-            alt={logoAlt}
-            className="h-6 w-auto sm:h-8"
-            width={180}
-            height={40}
-            priority
-          />
+          <DwellaLogo className="h-7 w-auto sm:h-9" />
           <span className="sr-only">{srBrand ?? logoAlt}</span>
         </Link>
 
@@ -306,6 +300,53 @@ export function GlobalProHeader({
       {/* Bottom divider to match homeowner header */}
       <div className="mx-auto h-px max-w-7xl bg-white/15" />
     </div>
+  );
+}
+
+/** Inline SVG Dwella logo: house + green check + rounded wordmark */
+function DwellaLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 260 72"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      role="img"
+      aria-label="Dwella"
+    >
+      {/* House outline */}
+      <path
+        d="M18 52C16.343 52 15 50.657 15 49V27.414C15 26.52 15.36 25.661 16 25.02L35.586 5.434C36.367 4.653 37.633 4.653 38.414 5.434L58 25.02C58.64 25.661 59 26.52 59 27.414V49C59 50.657 57.657 52 56 52H42C40.343 52 39 50.657 39 49V39H25V49C25 50.657 23.657 52 22 52H18Z"
+        stroke="#FFFFFF"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Checkmark */}
+      <path
+        d="M32.5 34L40 41.5L54 27.5"
+        stroke="#33C17D"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Wordmark */}
+      <text
+        x={80}
+        y={50}
+        fill="#FFFFFF"
+        fontSize={42}
+        fontWeight={600}
+        style={{
+          fontFamily:
+            '"Trebuchet MS","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif',
+          letterSpacing: 0.5,
+        }}
+      >
+        Dwella
+      </text>
+    </svg>
   );
 }
 

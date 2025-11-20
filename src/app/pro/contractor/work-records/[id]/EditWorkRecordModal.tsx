@@ -1,4 +1,4 @@
-// app/pro/contractor/work-records/[id]/EditWorkRecordModal.tsx
+// app/pro/contractor/document-completed-work-submissions-records/[id]/EditWorkRecordModal.tsx
 "use client";
 
 import { useState } from "react";
@@ -27,7 +27,7 @@ export function EditWorkRecordModal({ open, onClose, workRecord, workRecordId }:
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Initialize form with current work record data
+  // Initialize form with current document-completed-work-submissions record data
   const [form, setForm] = useState({
     workType: workRecord.workType,
     workDate: workRecord.workDate,
@@ -39,7 +39,7 @@ export function EditWorkRecordModal({ open, onClose, workRecord, workRecordId }:
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [warrantyFile, setWarrantyFile] = useState<File | null>(null);
 
-  // Reset form when work record changes or modal opens
+  // Reset form when document-completed-work-submissions record changes or modal opens
   useState(() => {
     if (open) {
       setForm({
@@ -106,7 +106,7 @@ export function EditWorkRecordModal({ open, onClose, workRecord, workRecordId }:
     setSaving(true);
 
     try {
-      // Step 1: Update work record details
+      // Step 1: Update document-completed-work-submissions record details
       const res = await fetch(`/api/pro/contractor/work-records/${workRecordId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -120,7 +120,7 @@ export function EditWorkRecordModal({ open, onClose, workRecord, workRecordId }:
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to update work record");
+        throw new Error(error.error || "Failed to update document-completed-work-submissions record");
       }
 
       // Step 2: Upload new files if any
@@ -141,7 +141,7 @@ export function EditWorkRecordModal({ open, onClose, workRecord, workRecordId }:
           ? await uploadFileWithRecordId(warrantyFile, workRecordId)
           : null;
 
-        // Step 3: Update work record with file URLs
+        // Step 3: Update document-completed-work-submissions record with file URLs
         await fetch(`/api/pro/contractor/work-records/${workRecordId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -159,8 +159,8 @@ export function EditWorkRecordModal({ open, onClose, workRecord, workRecordId }:
       onClose();
       router.refresh();
     } catch (error) {
-      console.error("Failed to update work record:", error);
-      alert(error instanceof Error ? error.message : "Failed to update work record");
+      console.error("Failed to update document-completed-work-submissions record:", error);
+      alert(error instanceof Error ? error.message : "Failed to update document-completed-work-submissions record");
     } finally {
       setSaving(false);
       setUploading(false);

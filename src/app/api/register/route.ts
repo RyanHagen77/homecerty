@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         name: name || null,
         passwordHash,
         role: userRole,
-        emailVerified: invitationToken ? new Date() : null, // Auto-verify-work-records if invited
+        emailVerified: invitationToken ? new Date() : null, // Auto-verify-document-completed-work-submissions-records if invited
         proStatus: userRole === "PRO" ? "PENDING" : null,
       },
       select: {

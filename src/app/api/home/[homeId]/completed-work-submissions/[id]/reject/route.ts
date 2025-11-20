@@ -1,10 +1,10 @@
-// app/api/home/[homeId]/work/[workId]/reject/route.ts
+// app/api/home/[homeId]/document-completed-work-submissions/[id]/reject/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireHomeAccess } from "@/lib/authz";
-import { WorkRequestStatus } from "@prisma/client";
+import { WorkSubmissionStatus } from "@prisma/client";
 
 export async function POST(
   _req: Request,
@@ -44,11 +44,11 @@ export async function POST(
     );
   }
 
-  // Update work record to rejected
+  // Update document-completed-work-submissions record to rejected
   const updated = await prisma.workRecord.update({
     where: { id: workId },
     data: {
-      status: WorkRequestStatus.REJECTED,
+      status: WorkSubmissionStatus.REJECTED,
       rejectionReason: "Rejected by homeowner",
     },
   });

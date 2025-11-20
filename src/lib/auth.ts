@@ -50,7 +50,7 @@ export const authConfig: NextAuthOptions = {
     }),
 
     EmailProvider({
-      from: process.env.EMAIL_FROM ?? "MyHomeDox <no-reply@myhomedox.com>",
+      from: process.env.EMAIL_FROM ?? "Dwella <no-reply@myhomedox.com>",
       async sendVerificationRequest({ identifier, url, provider }) {
         if (process.env.NODE_ENV !== "production") {
           console.log("[DEV] Magic link:", url);
@@ -62,8 +62,8 @@ export const authConfig: NextAuthOptions = {
 
         await resend.emails.send({
           to,
-          from: (provider.from ?? "MyHomeDox <no-reply@myhomedox.com>") as string,
-          subject: "Your MyHomeDox sign-in link",
+          from: (provider.from ?? "dwella <no-reply@dwella.com>") as string,
+          subject: "Your Dwella sign-in link",
           html: `<p>Click to sign in:</p><p><a href="${url}">${url}</a></p>`,
         });
       },

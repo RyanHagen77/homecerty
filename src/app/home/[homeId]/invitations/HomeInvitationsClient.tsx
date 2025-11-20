@@ -390,12 +390,12 @@ export default function HomeInvitationsClient({
   );
   const pendingCount = pendingReceived.length;
 
+  const totalInvitations = receivedInvitations.length + sentInvitations.length;
+
   function handleAcceptClick(invitationId: string) {
     setSelectedInvitation(invitationId);
     setShowAddressModal(true);
   }
-
-  // Find the handleAddressVerified function and replace it with this:
 
   async function handleAddressVerified(verifiedAddress: {
     street: string;
@@ -428,7 +428,7 @@ export default function HomeInvitationsClient({
         const error = await response.json();
         toast(error.error || "Failed to accept invitation");
         setProcessing(null);
-        return; // ✅ Just return, don't throw
+        return;
       }
 
       toast("Invitation accepted! Connection established.");
@@ -497,32 +497,51 @@ export default function HomeInvitationsClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm">
+        <Link href={`/home/${homeId}`} className="text-white/70 hover:text-white transition-colors">
+          {homeAddress}
+        </Link>
+        <span className="text-white/50">/</span>
+        <span className="text-white">Invitations</span>
+      </nav>
+
       {/* Header */}
       <section className={glass}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <Link
               href={`/home/${homeId}`}
-              className="mb-2 inline-flex items-center text-sm text-white/70 hover:text-white"
+              className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+              aria-label="Back to home"
             >
-              ← Back to Home
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
             </Link>
-            <h1 className={`text-2xl font-semibold ${heading}`}>
-              Contractor Invitations
-            </h1>
-            <p className={`mt-1 ${textMeta}`}>For {homeAddress}</p>
-            <p className={`mt-1 text-xs text-white/60`}>
-              {pendingCount} pending invitation
-              {pendingCount === 1 ? "" : "s"}
-            </p>
+            <div className="flex-1 min-w-0">
+              <h1 className={`text-2xl font-bold ${heading}`}>
+                Contractor Invitations
+              </h1>
+              <p className={`text-sm ${textMeta} mt-1`}>
+                {totalInvitations} {totalInvitations === 1 ? "invitation" : "invitations"} • {pendingCount} pending
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex-shrink-0">
             <button
               type="button"
               className={ctaPrimary}
               onClick={() => setInviteOpen(true)}
             >
-              Invite a Pro
+              + Invite a Pro
             </button>
           </div>
         </div>
@@ -533,7 +552,7 @@ export default function HomeInvitationsClient({
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab("received")}
-            className={`rounded-full border px-3 py-1 text-sm transition ${
+            className={`rounded-full border px-4 py-2 text-sm transition ${
               activeTab === "received"
                 ? "border-white/40 bg-white/15 text-white"
                 : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"
@@ -544,7 +563,7 @@ export default function HomeInvitationsClient({
           </button>
           <button
             onClick={() => setActiveTab("sent")}
-            className={`rounded-full border px-3 py-1 text-sm transition ${
+            className={`rounded-full border px-4 py-2 text-sm transition ${
               activeTab === "sent"
                 ? "border-white/40 bg-white/15 text-white"
                 : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"

@@ -217,7 +217,7 @@ function HomeTraceHouseIcon({ className }: { className?: string }) {
   );
 }
 
-// glue exports so both `default` and `{ HomeContextBar }` work
+// glue exports so both `default` and `{ HomeContextBar }` document-completed-work-submissions
 function HomeContextBar() {
   return <HomeContextBarInner />;
 }

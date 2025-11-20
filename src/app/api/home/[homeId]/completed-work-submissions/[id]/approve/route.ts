@@ -1,10 +1,10 @@
-// app/api/home/[homeId]/work/[workId]/approve/route.ts
+// app/api/home/[homeId]/document-completed-work-submissions/[id]/approve/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireHomeAccess } from "@/lib/authz";
-import { WorkRequestStatus } from "@prisma/client";
+import { WorkSubmissionStatus } from "@prisma/client";
 
 export async function POST(
   _req: Request,
@@ -56,7 +56,7 @@ export async function POST(
   const updated = await prisma.workRecord.update({
     where: { id: workId },
     data: {
-      status: WorkRequestStatus.APPROVED,
+      status: WorkSubmissionStatus.APPROVED,
       isVerified: true,
       claimedBy: session.user.id,
       claimedAt: new Date(),
@@ -100,7 +100,7 @@ export async function POST(
     });
   }
 
-  // 4) Link work record to final record
+  // 4) Link document-completed-work-submissions record to final record
   await prisma.workRecord.update({
     where: { id: workId },
     data: { finalRecordId: finalRecord.id },
@@ -136,7 +136,7 @@ export async function POST(
     data: {
       userId: workRecord.contractorId,
       channel: "EMAIL",
-      subject: "Your work has been approved",
+      subject: "Your document-completed-work-submissions has been approved",
       payload: {
         type: "WORK_APPROVED",
         workRecordId: workRecord.id,

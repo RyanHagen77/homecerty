@@ -1,4 +1,4 @@
-// app/home/[homeId]/pending-work/page.tsx
+// app/home/[homeId]/pending-document-completed-work-submissions/page.tsx
 export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth";
@@ -37,7 +37,7 @@ export default async function PendingWorkPage({
 
   const homeAddress = `${home.address}${home.city ? `, ${home.city}` : ""}${home.state ? `, ${home.state}` : ""}`;
 
-  // Get pending work records with attachments
+  // Get pending document-completed-work-submissions records with attachments
   const pendingWorkRecords = await prisma.workRecord.findMany({
     where: {
       homeId,

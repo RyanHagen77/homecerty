@@ -1,4 +1,4 @@
-// app/home/[homeId]/pending-work/PendingWorkClient.tsx
+// app/home/[homeId]/completed-work-submissions/pending/PendingWorkClient.tsx
 "use client";
 
 import { useState } from "react";
@@ -70,13 +70,13 @@ export default function PendingWorkClient({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to verify work");
+        throw new Error("Failed to verify document-completed-work-submissions");
       }
 
       router.refresh();
     } catch (error) {
-      console.error("Error verifying work:", error);
-      alert("Failed to verify work. Please try again.");
+      console.error("Error verifying document-completed-work-submissions:", error);
+      alert("Failed to verify document-completed-work-submissions. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -98,13 +98,13 @@ export default function PendingWorkClient({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to dispute work");
+        throw new Error("Failed to dispute document-completed-work-submissions");
       }
 
       router.refresh();
     } catch (error) {
-      console.error("Error disputing work:", error);
-      alert("Failed to dispute work. Please try again.");
+      console.error("Error disputing document-completed-work-submissions:", error);
+      alert("Failed to dispute document-completed-work-submissions. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -126,13 +126,13 @@ export default function PendingWorkClient({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to reject work");
+        throw new Error("Failed to reject document-completed-work-submissions");
       }
 
       router.refresh();
     } catch (error) {
-      console.error("Error rejecting work:", error);
-      alert("Failed to reject work. Please try again.");
+      console.error("Error rejecting document-completed-work-submissions:", error);
+      alert("Failed to reject document-completed-work-submissions. Please try again.");
     } finally {
       setProcessing(null);
     }

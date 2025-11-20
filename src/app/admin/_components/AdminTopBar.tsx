@@ -10,14 +10,14 @@ export default function AdminTopBar() {
         <Link href="/" className="inline-flex items-center gap-3 shrink-0">
           <Image
             src="/myhomedox_logo.png"
-            alt="MyHomeDox"
+            alt="Dwella"
             width={160}
             height={44}
             priority
             className="h-7 w-auto sm:h-9"
             sizes="(min-width: 640px) 160px, 120px"
           />
-          <span className="sr-only">MyHomeDox Admin</span>
+          <span className="sr-only">Dwella Admin</span>
         </Link>
         <div className="text-sm text-white/80">Admin Console</div>
       </div>

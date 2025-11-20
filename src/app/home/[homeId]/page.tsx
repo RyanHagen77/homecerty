@@ -6,10 +6,11 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
-import { glass, glassTight, textMeta, ctaPrimary, heading } from "@/lib/glass";
+import { glass, textMeta, ctaPrimary, heading } from "@/lib/glass";
 import ClientActions from "@/app/home/_components/ClientActions";
 import { ClientCard } from "@/app/home/_components/ClientCard";
 import { HomePicker } from "@/app/home/_components/HomePicker";
+import { PropertyStats } from "@/app/home/_components/PropertyStats";
 
 type HomeMeta = {
   attrs?: {
@@ -113,12 +114,12 @@ export default async function HomePage({
   const attrs = meta?.attrs ?? {};
 
   const stats = {
-    yearBuilt: attrs.yearBuilt ?? undefined,
-    sqft: attrs.sqft ?? undefined,
-    beds: attrs.beds ?? undefined,
-    baths: attrs.baths ?? undefined,
-    estValue: attrs.estValue ?? undefined,
-    healthScore: attrs.healthScore ?? undefined,
+    yearBuilt: attrs.yearBuilt ?? null,
+    sqft: attrs.sqft ?? null,
+    beds: attrs.beds ?? null,
+    baths: attrs.baths ?? null,
+    estValue: attrs.estValue ?? null,
+    healthScore: attrs.healthScore ?? null,
     lastUpdated: attrs.lastUpdated ?? undefined,
   };
 
@@ -163,9 +164,9 @@ export default async function HomePage({
       <div className="mx-auto max-w-7xl p-6 space-y-6">
         {/* Hero card */}
         <section
-            aria-labelledby="home-hero"
-            className={`${glass} overflow-visible relative z-[20]`}
-          >
+          aria-labelledby="home-hero"
+          className={`${glass} overflow-visible relative z-[20]`}
+        >
           <h2 id="home-hero" className="sr-only">
             Home overview
           </h2>
@@ -208,42 +209,9 @@ export default async function HomePage({
           </div>
         </section>
 
-        {/* Stats */}
-        <section
-          aria-labelledby="stats"
-          className="grid grid-cols-1 gap-4 md:grid-cols-5"
-        >
-          <Stat
-            label="Health Score"
-            value={
-              stats.healthScore != null
-                ? `${stats.healthScore}/100`
-                : "—"
-            }
-            hint="A 0–100 score based on recent maintenance."
-          />
-          <Stat
-            label="Est. Value"
-            value={
-              stats.estValue != null
-                ? `$${Number(stats.estValue).toLocaleString()}`
-                : "—"
-            }
-          />
-          <Stat
-            label="Beds / Baths"
-            value={`${stats.beds ?? "—"} / ${stats.baths ?? "—"}`}
-          />
-          <Stat
-            label="Sq Ft"
-            value={
-              stats.sqft != null
-                ? Number(stats.sqft).toLocaleString()
-                : "—"
-            }
-          />
-          <Stat label="Year Built" value={stats.yearBuilt ?? "—"} />
-        </section>
+{/* Stats */}
+<PropertyStats homeId={home.id} stats={stats} />
+
 
         {/* Alerts */}
         {(overdueReminders.length > 0 ||
@@ -392,36 +360,6 @@ export default async function HomePage({
 }
 
 /* ------- Helpers ------- */
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  hint?: string;
-}) {
-  return (
-    <div className={glassTight} role="group" aria-label={label}>
-      <div className="flex items-center gap-1 text-sm text-white/70">
-        <span>{label}</span>
-        {hint && (
-          <span
-            aria-label={hint}
-            title={hint}
-            className="cursor-help"
-          >
-            ⓘ
-          </span>
-        )}
-      </div>
-      <div className="mt-1 text-xl font-semibold text-white">
-        {value}
-      </div>
-    </div>
-  );
-}
 
 function RecordItem({ record, homeId }: { record: Record; homeId: string }) {
   return (

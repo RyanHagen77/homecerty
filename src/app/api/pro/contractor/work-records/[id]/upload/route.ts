@@ -1,4 +1,4 @@
-// app/api/pro/contractor/work-records-records/[id]/upload/route.ts
+// app/api/pro/contractor/document-completed-work-submissions-records-records/[id]/upload/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
@@ -33,7 +33,7 @@ const ALLOWED_DOC_TYPES = [
 ];
 
 /**
- * POST /api/pro/contractor/work-records-records/:id/upload
+ * POST /api/pro/contractor/document-completed-work-submissions-records-records/:id/upload
  * Generate presigned URLs for uploading files to S3
  */
 export async function POST(
@@ -47,7 +47,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verify work-records record belongs to this contractor
+  // Verify document-completed-work-submissions-records record belongs to this contractor
   const workRecord = await prisma.workRecord.findUnique({
     where: { id: workRecordId },
     include: { home: true },
@@ -62,7 +62,7 @@ export async function POST(
 
   if (workRecord.contractorId !== session.user.id) {
     return NextResponse.json(
-      { error: "You do not own this work-records record" },
+      { error: "You do not own this document-completed-work-submissions-records record" },
       { status: 403 }
     );
   }
@@ -119,7 +119,7 @@ export async function POST(
         const extension = file.name.split(".").pop();
         const timestamp = Date.now();
 
-        // S3 key structure: homes/{homeId}/work-records-records/{workRecordId}/{category}/{timestamp}-{fileId}.{ext}
+        // S3 key structure: homes/{homeId}/document-completed-work-submissions-records-records/{workRecordId}/{category}/{timestamp}-{fileId}.{ext}
         const key = `homes/${workRecord.homeId}/work-records/${workRecordId}/${file.category}/${timestamp}-${fileId}.${extension}`;
 
         const command = new PutObjectCommand({
@@ -163,8 +163,8 @@ export async function POST(
 }
 
 /**
- * PATCH /api/pro/contractor/work-records-records/:id/upload
- * Confirm uploads and save S3 keys to work-records record
+ * PATCH /api/pro/contractor/document-completed-work-submissions-records-records/:id/upload
+ * Confirm uploads and save S3 keys to document-completed-work-submissions-records record
  */
 export async function PATCH(
   req: Request,
@@ -177,7 +177,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verify work-records record belongs to this contractor
+  // Verify document-completed-work-submissions-records record belongs to this contractor
   const workRecord = await prisma.workRecord.findUnique({
     where: { id: workRecordId },
   });
@@ -191,7 +191,7 @@ export async function PATCH(
 
   if (workRecord.contractorId !== session.user.id) {
     return NextResponse.json(
-      { error: "You do not own this work-records record" },
+      { error: "You do not own this document-completed-work-submissions-records record" },
       { status: 403 }
     );
   }
@@ -215,7 +215,7 @@ export async function PATCH(
       }
     }
 
-    // Update work-records record with file URLs
+    // Update document-completed-work-submissions-records record with file URLs
     const updated = await prisma.workRecord.update({
       where: { id: workRecordId },
       data: {

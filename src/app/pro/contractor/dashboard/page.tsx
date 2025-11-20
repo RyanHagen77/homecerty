@@ -57,7 +57,7 @@ export default async function ProDashboardPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Get work records for recent work section
+  // Get document-completed-work-submissions records for recent document-completed-work-submissions section
   const recentWork = await prisma.workRecord.findMany({
     where: {
       contractorId: userId,

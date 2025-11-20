@@ -1,4 +1,4 @@
-// app/api/pro/contractor/work-records/route.ts
+// app/api/pro/contractor/document-completed-work-submissions-records/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
@@ -21,8 +21,8 @@ const createWorkRecordSchema = z.object({
 });
 
 /**
- * POST /api/pro/contractor/work-records
- * Allows contractors to document work for connected homes
+ * POST /api/pro/contractor/document-completed-work-submissions-records
+ * Allows contractors to document document-completed-work-submissions for connected homes
  */
 export async function POST(req: Request) {
   const session = await getServerSession(authConfig);
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
   if (user?.role !== "PRO" || user.proProfile?.type !== "CONTRACTOR") {
     return NextResponse.json(
-      { error: "Only contractors can document work" },
+      { error: "Only contractors can document document-completed-work-submissions" },
       { status: 403 }
     );
   }
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create work record
+    // Create document-completed-work-submissions record
     const workRecord = await prisma.workRecord.create({
       data: {
         homeId: data.homeId,
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating work record:", error);
+    console.error("Error creating document-completed-work-submissions record:", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -118,15 +118,15 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { error: "Failed to create work record" },
+      { error: "Failed to create document-completed-work-submissions record" },
       { status: 500 }
     );
   }
 }
 
 /**
- * GET /api/pro/contractor/work-records
- * List contractor's work records
+ * GET /api/pro/contractor/document-completed-work-submissions-records
+ * List contractor's document-completed-work-submissions records
  */
 export async function GET(req: Request) {
   const session = await getServerSession(authConfig);

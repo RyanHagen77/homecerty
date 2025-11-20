@@ -177,7 +177,7 @@ export default function AccountPage() {
           <div className="bg-white/5 rounded-lg p-4 border border-white/10">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-white font-medium">MyHomeDox Basic</p>
+                <p className="text-white font-medium">Dwella Basic</p>
                 <p className="text-white/60 text-sm mt-1">
                   Manage unlimited homes and maintenance records
                 </p>

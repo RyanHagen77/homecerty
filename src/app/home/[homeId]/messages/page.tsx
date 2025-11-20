@@ -106,6 +106,10 @@ export default async function HomeMessagesPage({
     },
   });
 
+  const addrLine = [home.address, home.city, home.state]
+  .filter(Boolean)
+  .join(", ");
+
   // Format conversations
   const conversations = connections
     .filter((conn) => conn.contractor !== null) // Filter out connections without contractors
@@ -140,21 +144,43 @@ export default async function HomeMessagesPage({
       <Bg />
 
       <div className="mx-auto max-w-4xl space-y-6 p-6">
+
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm">
+          <Link href={`/home/${homeId}`} className="text-white/70 hover:text-white transition-colors">
+            {addrLine}
+          </Link>
+          <span className="text-white/50">/</span>
+          <span className="text-white">Messages</span>
+        </nav>
+
         {/* Header */}
         <section className={glass}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className={`text-2xl font-semibold ${heading}`}>Messages</h1>
-              <p className={textMeta}>
-                {home.address}
-              </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Link
+                href={`/home/${homeId}`}
+                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+                aria-label="Back to home"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+              </Link>
+              <div className="flex-1 min-w-0">
+                <h1 className={`text-2xl font-bold ${heading}`}>Messages</h1>
+                <p className={`text-sm ${textMeta} mt-1`}>
+                  {conversations.length} {conversations.length === 1 ? "conversation" : "conversations"}
+                </p>
+              </div>
             </div>
-            <Link
-              href={`/home/${homeId}`}
-              className="text-sm text-white/70 hover:text-white"
-            >
-              ← Back to Home
-            </Link>
           </div>
         </section>
 

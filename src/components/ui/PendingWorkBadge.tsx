@@ -1,7 +1,7 @@
 /**
  * PENDING WORK BADGE
  *
- * Shows total pending work items for the current user.
+ * Shows total pending document-completed-work-submissions items for the current user.
  * - Homeowners: Work items across ALL homes they own
  * - Contractors: Work requests received
  * Polls API every 30 seconds.
@@ -24,13 +24,13 @@ export function PendingWorkBadge() {
   useEffect(() => {
     const fetchWork = async () => {
       try {
-        const response = await fetch("/api/work/pending");
+        const response = await fetch("/api/pending-completed-work-submissions");
         if (response.ok) {
           const data = await response.json();
           setWorkCount(data.total || 0);
         }
       } catch (error) {
-        console.error("Failed to fetch pending work count:", error);
+        console.error("Failed to fetch pending work submissions count:", error);
       }
     };
 

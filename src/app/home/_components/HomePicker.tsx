@@ -61,22 +61,24 @@ export function HomePicker({
           const [messagesRes, invitesRes, workRes] = await Promise.all([
             fetch(`/api/home/${home.id}/messages/unread`),
             fetch(`/api/home/${home.id}/invitations?status=PENDING`),
-            fetch(`/api/home/${home.id}/work/pending`),
+            fetch(`/api/home/${home.id}/completed-work-submissions/pending`), // ← Fixed this line
           ]);
 
-          const messagesData = messagesRes.ok ? await messagesRes.json() : { total: 0 };
+          const messagesData = messagesRes.ok ? await messagesRes.json() : {total: 0};
           const invitesData = invitesRes.ok ? await invitesRes.json() : {};
-          const workData = workRes.ok ? await workRes.json() : { totalPending: 0 };
+          const workData = workRes.ok ? await workRes.json() : {total: 0}; // ← Changed totalPending to total
 
           const pendingInvites =
-            (invitesData.sentInvitations?.filter((inv: { status: string }) => inv.status === 'PENDING').length || 0) +
-            (invitesData.receivedInvitations?.filter((inv: { status: string }) => inv.status === 'PENDING').length || 0);
+              (invitesData.sentInvitations?.filter((inv: { status: string }) => inv.status === 'PENDING').length || 0) +
+              (invitesData.receivedInvitations?.filter((inv: {
+                status: string
+              }) => inv.status === 'PENDING').length || 0);
 
           return {
             homeId: home.id,
             unreadMessages: messagesData.total || 0,
             pendingInvitations: pendingInvites,
-            pendingWork: workData.totalPending || 0,
+            pendingWork: workData.total || 0, // ← Changed totalPending to total
           };
         });
 

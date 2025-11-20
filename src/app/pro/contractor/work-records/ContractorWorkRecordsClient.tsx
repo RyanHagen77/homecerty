@@ -47,7 +47,7 @@ export default function ContractorWorkRecordsClient({
   );
 
   const filtered = useMemo(() => {
-    // Always work on a copy so we don't mutate props
+    // Always document-completed-work-submissions on a copy so we don't mutate props
     let list = [...workRecords];
 
     if (filter === "pending") {
@@ -139,7 +139,7 @@ export default function ContractorWorkRecordsClient({
             <p className={`mb-4 ${textMeta}`}>
               {q || filter !== "all"
                 ? "No records match your filters"
-                : "Start documenting work at connected properties"}
+                : "Start documenting document-completed-work-submissions at connected properties"}
             </p>
             {q || filter !== "all" ? (
               <button

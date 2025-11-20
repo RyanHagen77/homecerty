@@ -52,7 +52,7 @@ export default function MainLanding() {
     if (aud === "home") {
       return {
         headline: "Your home's report card, built for trust.",
-        sub: "Store repairs, upgrades, reminders and warranties. Share a verified report in one click. Invite professionals to document their work and stay connected.",
+        sub: "Store repairs, upgrades, reminders and warranties. Share a verified report in one click. Invite professionals to document their document-completed-work-submissions and stay connected.",
         primary: { label: "Create home record", href: "/home" },
         secondary: { label: "See sample report", href: "/report" },
         showAddress: true,
@@ -60,7 +60,7 @@ export default function MainLanding() {
     }
     return {
       headline: "Build your professional presence on the homes you serve.",
-      sub: "Document your work records on client properties, maintain verified portfolios, and stay connected with homeowners and their trusted circle long after the job is done.",
+      sub: "Document your document-completed-work-submissions records on client properties, maintain verified portfolios, and stay connected with homeowners and their trusted circle long after the job is done.",
       primary: { label: "Apply as a Pro", href: "/apply" },
       secondary: { label: "View sample record", href: "/report" },
       showAddress: false,
@@ -91,16 +91,9 @@ export default function MainLanding() {
               type="button"
               onClick={() => router.push("/home")}
               className="cursor-pointer"
-              aria-label="MyHomeDox home"
+              aria-label="Dwella home"
             >
-              <Image
-                src="/myhomedox_logo.png"
-                alt="MyHomeDox"
-                className="h-7 w-auto sm:h-9"
-                width={200}
-                height={50}
-                priority
-              />
+              <DwellaLogo className="h-8 w-auto sm:h-10" />
             </button>
           </div>
 
@@ -215,7 +208,7 @@ export default function MainLanding() {
                 ],
                 [
                   "Verified documentation",
-                  "Professionals document their work records directly on your home's record.",
+                  "Professionals document their document-completed-work-submissions records directly on your home's record.",
                 ],
                 [
                   "Easy sharing",
@@ -228,8 +221,8 @@ export default function MainLanding() {
               ]
             : [
                 [
-                  "Document your work records",
-                  "Create verified records of the work you do on client properties.",
+                  "Document your document-completed-work-submissions records",
+                  "Create verified records of the document-completed-work-submissions you do on client properties.",
                 ],
                 [
                   "Build your portfolio",
@@ -241,7 +234,7 @@ export default function MainLanding() {
                 ],
                 [
                   "Get discovered",
-                  "When homes change hands, new owners see your quality work.",
+                  "When homes change hands, new owners see your quality document-completed-work-submissions.",
                 ],
               ]
           ).map(([t, d]) => (
@@ -268,7 +261,7 @@ export default function MainLanding() {
                 [
                   "2",
                   "Add documentation",
-                  "Upload receipts and invite professionals to document their work.",
+                  "Upload receipts and invite professionals to document their document-completed-work-submissions.",
                 ],
                 [
                   "3",
@@ -284,7 +277,7 @@ export default function MainLanding() {
                 ],
                 [
                   "2",
-                  "Document your work records",
+                  "Document your document-completed-work-submissions records",
                   "Add records to the homes you serve (with owner permission).",
                 ],
                 [
@@ -342,5 +335,52 @@ export default function MainLanding() {
 
       <div className="h-16" />
     </main>
+  );
+}
+
+/** Inline SVG Dwella logo: house + green check + rounded wordmark */
+function DwellaLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 260 72"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      role="img"
+      aria-label="Dwella"
+    >
+      {/* House outline */}
+      <path
+        d="M18 52C16.343 52 15 50.657 15 49V27.414C15 26.52 15.36 25.661 16 25.02L35.586 5.434C36.367 4.653 37.633 4.653 38.414 5.434L58 25.02C58.64 25.661 59 26.52 59 27.414V49C59 50.657 57.657 52 56 52H42C40.343 52 39 50.657 39 49V39H25V49C25 50.657 23.657 52 22 52H18Z"
+        stroke="#FFFFFF"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Checkmark */}
+      <path
+        d="M32.5 34L40 41.5L54 27.5"
+        stroke="#33C17D"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Wordmark */}
+      <text
+        x={80}
+        y={50}
+        fill="#FFFFFF"
+        fontSize={42}
+        fontWeight={600}
+        style={{
+          fontFamily:
+            '"Trebuchet MS","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif',
+          letterSpacing: 0.5,
+        }}
+      >
+        Dwella
+      </text>
+    </svg>
   );
 }

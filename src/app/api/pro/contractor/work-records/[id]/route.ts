@@ -1,4 +1,4 @@
-// app/api/pro/contractor/work-records/[id]/route.ts
+// app/api/pro/contractor/document-completed-work-submissions-records/[id]/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
@@ -33,8 +33,8 @@ function getKeyAndFilename(
 }
 
 /**
- * PATCH /api/pro/contractor/work-records/:id
- * Update work record with file URLs after upload
+ * PATCH /api/pro/contractor/document-completed-work-submissions-records/:id
+ * Update document-completed-work-submissions record with file URLs after upload
  */
 export async function PATCH(
   req: Request,
@@ -51,7 +51,7 @@ export async function PATCH(
     const body = await req.json();
     const data = updateWorkRecordSchema.parse(body);
 
-    // Verify work record belongs to this contractor
+    // Verify document-completed-work-submissions record belongs to this contractor
     const workRecord = await prisma.workRecord.findFirst({
       where: {
         id,
@@ -198,7 +198,7 @@ export async function PATCH(
       workRecord: updated,
     });
   } catch (error) {
-    console.error("Error updating work record:", error);
+    console.error("Error updating document-completed-work-submissions record:", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -208,15 +208,15 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { error: "Failed to update work record" },
+      { error: "Failed to update document-completed-work-submissions record" },
       { status: 500 }
     );
   }
 }
 
 /**
- * GET /api/pro/contractor/work-records/:id
- * Get single work record
+ * GET /api/pro/contractor/document-completed-work-submissions-records/:id
+ * Get single document-completed-work-submissions record
  */
 export async function GET(
   _req: Request,
@@ -277,8 +277,8 @@ export async function GET(
 }
 
 /**
- * DELETE /api/pro/contractor/work-records/:id
- * Delete a work record
+ * DELETE /api/pro/contractor/document-completed-work-submissions-records/:id
+ * Delete a document-completed-work-submissions record
  */
 export async function DELETE(
   _req: Request,
@@ -312,9 +312,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting work record:", error);
+    console.error("Error deleting document-completed-work-submissions record:", error);
     return NextResponse.json(
-      { error: "Failed to delete work record" },
+      { error: "Failed to delete document-completed-work-submissions record" },
       { status: 500 }
     );
   }

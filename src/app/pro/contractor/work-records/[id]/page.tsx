@@ -1,4 +1,4 @@
-// app/pro/contractor/work-records/[id]/page.tsx
+// app/pro/contractor/document-completed-work-submissions-records/[id]/page.tsx
 export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth";

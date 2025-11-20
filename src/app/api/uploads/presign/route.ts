@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 /**
  * POST /api/uploads/presign
  * Generate presigned URL for uploads
- * Works for both homeowners (records/reminders/warranties) and contractors (work records)
+ * Works for both homeowners (records/reminders/warranties) and contractors (document-completed-work-submissions records)
  */
 export async function POST(req: Request) {
   const session = await getServerSession(authConfig);
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         );
       }
 
-      // Verify work record if provided
+      // Verify document-completed-work-submissions record if provided
       if (recordId) {
         const workRecord = await prisma.workRecord.findFirst({
           where: {

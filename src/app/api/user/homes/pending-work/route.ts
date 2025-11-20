@@ -1,4 +1,4 @@
-// app/api/user/homes/pending-work-records/route.ts
+// app/api/user/homes/pending-document-completed-work-submissions-records/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
@@ -7,8 +7,8 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 /**
- * GET /api/user/homes/pending-work-records?homeId=xyz
- * Fetches all unverified work-records at user's properties
+ * GET /api/user/homes/pending-document-completed-work-submissions-records?homeId=xyz
+ * Fetches all unverified document-completed-work-submissions-records at user's properties
  */
 export async function GET(req: Request) {
   const session = await getServerSession(authConfig);
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const homeId = searchParams.get("homeId");
 
-  // Get all unverified work-records records
+  // Get all unverified document-completed-work-submissions-records records
   const pendingWork = await prisma.workRecord.findMany({
     where: {
       home: {

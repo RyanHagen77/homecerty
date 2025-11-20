@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { glass, glassTight, textMeta, heading } from "@/lib/glass";
-import HomeTopBar from "@/app/home/_components/HomeContextBar";
 import { WarrantiesPageClient } from "./_components/WarrantiesPageClient";
 import AddRecordButton from "@/app/home/_components/AddRecordButton";
 
@@ -164,7 +163,6 @@ export default async function WarrantiesPage({
       </div>
 
       <div className="mx-auto max-w-7xl p-6 space-y-6">
-        <HomeTopBar />
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm">

@@ -50,35 +50,30 @@ export default function ClientActions({ homeId }: { homeId: string }) {
   const [loadingInvitations, setLoadingInvitations] = useState(true);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
-  /* ---------- Fetch pending work count ---------- */
-  useEffect(() => {
-    async function fetchPendingWork() {
-      try {
-        const res = await fetch(`/api/home/${homeId}/work/pending`);
-        if (!res.ok) {
-          setPendingWorkCount(0);
-          return;
-        }
-
-        const data = await res.json();
-        const count =
-          typeof data.totalPending === "number"
-            ? data.totalPending
-            : Array.isArray(data.pendingWork)
-            ? data.pendingWork.length
-            : 0;
-
-        setPendingWorkCount(count);
-      } catch (error) {
-        console.error("Error fetching pending work:", error);
+useEffect(() => {
+  async function fetchPendingWork() {
+    try {
+      const res = await fetch(`/api/home/${homeId}/completed-work-submissions/pending`);
+      if (!res.ok) {
         setPendingWorkCount(0);
-      } finally {
-        setLoadingPending(false);
+        return;
       }
-    }
 
-    void fetchPendingWork();
-  }, [homeId]);
+      const data = await res.json();
+      // Changed from data.totalPending to data.total
+      const count = data.total || 0;
+
+      setPendingWorkCount(count);
+    } catch (error) {
+      console.error("Error fetching pending document-completed-work-submissions:", error);
+      setPendingWorkCount(0);
+    } finally {
+      setLoadingPending(false);
+    }
+  }
+
+  void fetchPendingWork();
+}, [homeId]);
 
   /* ---------- Fetch pending invitations count ---------- */
   useEffect(() => {
@@ -333,7 +328,7 @@ export default function ClientActions({ homeId }: { homeId: string }) {
           )}
         </Link>
 
-        {/* Connections Button - invitations + work with separate badges */}
+        {/* Connections Button - invitations + document-completed-work-submissions with separate badges */}
         <button
           type="button"
           onClick={() => setConnectionsOpen(true)}

@@ -33,14 +33,14 @@ export function WorkRecordActions({ workRecordId, workRecord }: Props) {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to delete work record");
+        throw new Error("Failed to delete document-completed-work-submissions record");
       }
 
       router.push("/pro/contractor/work-records");
       router.refresh();
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("Failed to delete work record. Please try again.");
+      alert("Failed to delete document-completed-work-submissions record. Please try again.");
       setDeleting(false);
     }
   }

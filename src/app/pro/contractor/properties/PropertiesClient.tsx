@@ -105,7 +105,7 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
             <p className={textMeta}>
               {searchQuery || filter !== "all"
                 ? "No properties match your filters"
-                : "Start documenting work-records-records to see properties here"}
+                : "Start documenting document-completed-work-submissions-records-records to see properties here"}
             </p>
             {(searchQuery || filter !== "all") && (
               <button

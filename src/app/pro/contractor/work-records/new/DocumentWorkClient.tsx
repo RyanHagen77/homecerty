@@ -89,14 +89,14 @@ export function DocumentWorkClient({ connectedHomes }: DocumentWorkClientProps) 
     e.preventDefault();
 
     if (!form.homeId || !form.workType.trim()) {
-      alert("Property and work type are required");
+      alert("Property and document-completed-work-submissions type are required");
       return;
     }
 
     setSaving(true);
 
     try {
-      // Step 1: Create work record WITHOUT files first
+      // Step 1: Create document-completed-work-submissions record WITHOUT files first
       const createResponse = await fetch("/api/pro/contractor/work-records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +112,7 @@ export function DocumentWorkClient({ connectedHomes }: DocumentWorkClientProps) 
 
       if (!createResponse.ok) {
         const error = await createResponse.json();
-        throw new Error(error.error || "Failed to create work record");
+        throw new Error(error.error || "Failed to create document-completed-work-submissions record");
       }
 
       const { workRecord } = await createResponse.json();
@@ -137,7 +137,7 @@ export function DocumentWorkClient({ connectedHomes }: DocumentWorkClientProps) 
 
       setUploading(false);
 
-      // Step 3: Update work record with file URLs
+      // Step 3: Update document-completed-work-submissions record with file URLs
       if (photoUrls.length > 0 || invoiceUrl || warrantyUrl) {
         await fetch(`/api/pro/contractor/work-records/${recordId}`, {
           method: "PATCH",
@@ -150,11 +150,11 @@ export function DocumentWorkClient({ connectedHomes }: DocumentWorkClientProps) 
         });
       }
 
-      // Redirect to the work record detail page
+      // Redirect to the document-completed-work-submissions record detail page
       router.push(`/pro/contractor/work-records/${recordId}`);
     } catch (error) {
-      console.error("Error documenting work:", error);
-      alert(error instanceof Error ? error.message : "Failed to document work. Please try again.");
+      console.error("Error documenting document-completed-work-submissions:", error);
+      alert(error instanceof Error ? error.message : "Failed to document document-completed-work-submissions. Please try again.");
     } finally {
       setSaving(false);
       setUploading(false);
