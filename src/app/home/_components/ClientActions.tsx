@@ -348,10 +348,6 @@ useEffect(() => {
             )}
           </div>
         </button>
-
-        <Link href={`/report?home=${homeId}`} className={ctaGhost}>
-          View Report
-        </Link>
       </div>
 
       {/* Unified Add Modal */}
