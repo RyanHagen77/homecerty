@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import * as React from "react";
 
 export default function ApplySelectPage() {
   const router = useRouter();
@@ -23,89 +24,155 @@ export default function ApplySelectPage() {
       </div>
 
       <div className="mx-auto max-w-4xl p-6">
-        {/* Header */}
-        <div className="mb-12 flex flex-col items-center text-center">
-          {/* Logo and Back Link Row */}
-          <div className="mb-8 flex w-full items-center justify-center gap-8">
-            <div className="flex items-center gap-3 text-3xl font-bold">
-              <svg viewBox="0 0 72 72" className="h-10 w-10" aria-hidden="true">
-                <path
-                  d="M18 52C16.343 52 15 50.657 15 49V27.414C15 26.52 15.36 25.661 16 25.02L35.586 5.434C36.367 4.653 37.633 4.653 38.414 5.434L58 25.02C58.64 25.661 59 26.52 59 27.414V49C59 50.657 57.657 52 56 52H42C40.343 52 39 50.657 39 49V39H25V49C25 50.657 23.657 52 22 52H18Z"
-                  stroke="white"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-                <path
-                  d="M32.5 34L40 41.5L54 27.5"
-                  stroke="#33C17D"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </svg>
-              <span>Dwella</span>
-            </div>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
-            >
-              ← Back to login
-            </Link>
-          </div>
+        {/* Top bar */}
+        <header className="mb-10 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            aria-label="Dwella home"
+            className="inline-flex items-center gap-2"
+          >
+            <DwellaLogo className="h-7 w-auto" />
+          </button>
 
-          <h1 className="text-4xl font-bold text-white">Join Dwella</h1>
-          <p className="mt-3 text-lg text-white/80">
-            Create your professional contractor account
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm text-white/70 hover:text-white transition-colors"
+          >
+            <span aria-hidden>←</span>
+            <span>Back to login</span>
+          </Link>
+        </header>
+
+        {/* Page title */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">
+            Join Dwella
+          </h1>
+          <p className="mt-2 text-sm sm:text-base text-white/80">
+            Create your professional contractor account.
           </p>
         </div>
 
-        {/* Contractor Card - Centered */}
+        {/* Contractor Card */}
         <div className="mx-auto max-w-md">
           <button
             onClick={() => router.push("/apply/contractor")}
-            className="group w-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-2xl transition hover:bg-white/15 hover:scale-105"
+            className="group w-full rounded-2xl border border-white/15 bg-black/45 backdrop-blur-xl p-8 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-colors hover:bg-black/55"
           >
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#33C17D]/20 text-4xl mx-auto border border-[#33C17D]/30">
-              🔧
+            {/* Icon */}
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#33C17D]/18 mx-auto border border-[#33C17D]/35">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  className="h-7 w-7 text-[#33C17D]"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth={1.8}
+  strokeLinecap="round"
+  strokeLinejoin="round"
+>
+  <path d="M22 7.5a5.5 5.5 0 0 1-7.7 5L7 19l-4 1 1-4 6.5-7.3A5.5 5.5 0 0 1 16.5 2L14 5l5 5 3-2.5Z"/>
+</svg>
             </div>
-            <h2 className="mb-3 text-3xl font-bold text-white">Contractor</h2>
-            <p className="mb-6 text-sm text-white/70">
-              HVAC, plumbing, electrical, and all trades
+
+            <h2 className="mb-2 text-2xl font-semibold text-white text-center">
+              Contractor
+            </h2>
+            <p className="mb-6 text-sm text-white/70 text-center">
+              HVAC, plumbing, electrical, and all trades.
             </p>
-            <ul className="mb-8 space-y-3 text-left text-sm text-white/90">
-              <li className="flex items-start gap-3">
-                <span className="text-[#33C17D] text-lg flex-shrink-0">✓</span>
-                <span>Document work on client properties</span>
+
+            <ul className="mb-7 space-y-2.5 text-left text-sm text-white/90">
+              <li className="flex items-start gap-2.5">
+                <span className="mt-[2px] text-[#33C17D] text-base flex-shrink-0">
+                  ✓
+                </span>
+                <span>Document work on client properties.</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="text-[#33C17D] text-lg flex-shrink-0">✓</span>
-                <span>Build verified work portfolio</span>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-[2px] text-[#33C17D] text-base flex-shrink-0">
+                  ✓
+                </span>
+                <span>Build a verified work portfolio tied to real homes.</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="text-[#33C17D] text-lg flex-shrink-0">✓</span>
-                <span>Get discovered by homeowners</span>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-[2px] text-[#33C17D] text-base flex-shrink-0">
+                  ✓
+                </span>
+                <span>Stay connected with homeowners after the job is done.</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="text-[#33C17D] text-lg flex-shrink-0">✓</span>
-                <span>Passive lead generation</span>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-[2px] text-[#33C17D] text-base flex-shrink-0">
+                  ✓
+                </span>
+                <span>Get discovered when homes change hands.</span>
               </li>
             </ul>
-            <div className="rounded-lg bg-gradient-to-r from-[rgba(243,90,31,0.85)] to-[rgba(243,90,31,0.75)] px-6 py-3 text-center font-medium text-white group-hover:from-[rgba(243,90,31,0.95)] group-hover:to-[rgba(243,90,31,0.85)] transition-all">
+
+            <div className="rounded-xl bg-[rgba(243,90,31,0.9)] px-6 py-3 text-center text-sm font-medium tracking-normal text-white border border-white/25 shadow-[0_12px_32px_rgba(243,90,31,0.35)] group-hover:bg-[rgba(243,90,31,0.96)] transition-colors">
               Apply as Contractor →
             </div>
           </button>
         </div>
 
-        <p className="mt-8 text-center text-sm text-white/70">
+        <p className="mt-8 text-center text-xs sm:text-sm text-white/70">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#33C17D] hover:text-[#33C17D]/80 transition-colors">
+          <Link
+            href="/login"
+            className="text-[#33C17D] hover:text-[#33C17D]/80 transition-colors"
+          >
             Sign in
           </Link>
         </p>
       </div>
     </main>
+  );
+}
+
+/** Inline SVG Dwella logo: house + green check + wordmark */
+function DwellaLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 260 72"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      role="img"
+      aria-label="Dwella"
+    >
+      {/* House outline */}
+      <path
+        d="M18 52C16.343 52 15 50.657 15 49V27.414C15 26.52 15.36 25.661 16 25.02L35.586 5.434C36.367 4.653 37.633 4.653 38.414 5.434L58 25.02C58.64 25.661 59 26.52 59 27.414V49C59 50.657 57.657 52 56 52H42C40.343 52 39 50.657 39 49V39H25V49C25 50.657 23.657 52 22 52H18Z"
+        stroke="#FFFFFF"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Checkmark */}
+      <path
+        d="M32.5 34L40 41.5L54 27.5"
+        stroke="#33C17D"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Wordmark */}
+      <text
+        x={80}
+        y={50}
+        fill="#FFFFFF"
+        fontSize={42}
+        fontWeight={600}
+        style={{
+          fontFamily:
+            '"Trebuchet MS","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif',
+          letterSpacing: 0.5,
+        }}
+      >
+        Dwella
+      </text>
+    </svg>
   );
 }
