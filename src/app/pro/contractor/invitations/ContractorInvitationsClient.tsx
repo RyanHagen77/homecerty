@@ -7,7 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddressVerification from "@/components/AddressVerification";
 import { Modal } from "@/components/ui/Modal";
-import { glass, heading, textMeta, ctaPrimary, ctaGhost } from "@/lib/glass";
+import { glass, glassTight, heading, textMeta, ctaPrimary, ctaGhost } from "@/lib/glass";
 
 type Invitation = {
   id: string;
@@ -120,13 +120,18 @@ export default function ContractorInvitationsClient({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to decline invitation");
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.error || "Failed to decline invitation");
       }
 
       router.refresh();
     } catch (error) {
       console.error("Error declining invitation:", error);
-      alert("Failed to decline invitation. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to decline invitation. Please try again."
+      );
     } finally {
       setProcessing(null);
     }
@@ -135,14 +140,14 @@ export default function ContractorInvitationsClient({
   const hasAnyInvitations = allInvitations.length > 0;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6 text-white">
+    <div className="mx-auto max-w-4xl space-y-6 p-6 text-white">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm">
         <Link
           href="/pro/contractor/dashboard"
           className="text-white/70 hover:text-white transition-colors"
         >
-          Pro Dashboard
+          Dashboard
         </Link>
         <span className="text-white/50">/</span>
         <span className="text-white">Invitations</span>
@@ -152,11 +157,10 @@ export default function ContractorInvitationsClient({
       <section className={glass}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg.white/10 hover:bg-white/15 transition-colors"
-              aria-label="Back"
+            <Link
+              href="/pro/contractor/dashboard"
+              className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+              aria-label="Back to dashboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -172,7 +176,7 @@ export default function ContractorInvitationsClient({
                   d="M10.5 19.5L3 12m0 0 7.5-7.5M3 12h18"
                 />
               </svg>
-            </button>
+            </Link>
             <div className="flex-1 min-w-0">
               <h1 className={`text-2xl font-bold ${heading}`}>
                 Contractor Invitations
@@ -192,14 +196,14 @@ export default function ContractorInvitationsClient({
       {/* Pending Invitations */}
       {pendingInvitations.length > 0 && (
         <section className={glass}>
-          <h2 className="mb-4 text-lg font-semibold text-white">
+          <h2 className={`mb-4 text-lg font-semibold ${heading}`}>
             Pending Invitations
           </h2>
           <div className="space-y-3">
             {pendingInvitations.map((invitation) => (
               <div
                 key={invitation.id}
-                className="rounded-xl border border-blue-500/40 bg-blue-500/10 p-4"
+                className={`${glassTight} border border-blue-500/40 bg-blue-500/10`}
               >
                 {/* Inviter Info */}
                 <div className="mb-3 flex items-start justify-between gap-4">
@@ -286,14 +290,14 @@ export default function ContractorInvitationsClient({
       {/* Past Invitations */}
       {processedInvitations.length > 0 && (
         <section className={glass}>
-          <h2 className="mb-4 text-lg font-semibold text-white">
+          <h2 className={`mb-4 text-lg font-semibold ${heading}`}>
             Past Invitations
           </h2>
           <div className="space-y-2">
             {processedInvitations.map((invitation) => (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3"
+                className={`${glassTight} flex items-center justify-between`}
               >
                 <div>
                   <p className="text-sm font-medium text-white">
@@ -326,7 +330,7 @@ export default function ContractorInvitationsClient({
       {/* Empty state */}
       {!hasAnyInvitations && (
         <section className={glass}>
-          <div className="rounded-xl border border-dashed border.white/25 bg-white/5 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-white/25 bg-white/5 p-8 text-center">
             <p className="mb-2 text-white/80">No invitations yet</p>
             <p className={`text-sm ${textMeta}`}>
               When homeowners invite you to document work on their properties,
@@ -347,8 +351,8 @@ export default function ContractorInvitationsClient({
       >
         <div className="mt-2 space-y-4 text-white">
           <p className={`text-sm ${textMeta}`}>
-            Confirm the property address for this job so Dwella can attach your
-            work to the correct home record.
+            Confirm the property address for this job so MyHomeDox can attach
+            your work to the correct home record.
           </p>
 
           <AddressVerification onVerified={handleAddressVerified} />

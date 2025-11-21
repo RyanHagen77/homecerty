@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { glass, glassTight, heading, textMeta, ctaGhost } from "@/lib/glass";
+import Image from "next/image";
+import { glass, heading, textMeta, ctaGhost } from "@/lib/glass";
 import { Input } from "@/components/ui";
 
 type Property = {
@@ -28,11 +29,14 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "past">("all");
 
-  const counts = useMemo(() => ({
-    all: properties.length,
-    active: properties.filter((p) => p.connectionStatus === "ACTIVE").length,
-    past: properties.filter((p) => p.connectionStatus !== "ACTIVE").length,
-  }), [properties]);
+  const counts = useMemo(
+    () => ({
+      all: properties.length,
+      active: properties.filter((p) => p.connectionStatus === "ACTIVE").length,
+      past: properties.filter((p) => p.connectionStatus !== "ACTIVE").length,
+    }),
+    [properties]
+  );
 
   const filtered = useMemo(() => {
     let list = properties;
@@ -66,7 +70,7 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
           <div>
             <h1 className={`text-2xl font-semibold ${heading}`}>Properties</h1>
             <p className={`mt-1 ${textMeta}`}>
-              Homes you've worked on and maintained
+              Homes you&apos;ve worked on and maintained.
             </p>
           </div>
         </div>
@@ -75,14 +79,20 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
       {/* Filters */}
       <section className={glass}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Chip active={filter === "all"} onClick={() => setFilter("all")}>
               All ({counts.all})
             </Chip>
-            <Chip active={filter === "active"} onClick={() => setFilter("active")}>
+            <Chip
+              active={filter === "active"}
+              onClick={() => setFilter("active")}
+            >
               Active Clients ({counts.active})
             </Chip>
-            <Chip active={filter === "past"} onClick={() => setFilter("past")}>
+            <Chip
+              active={filter === "past"}
+              onClick={() => setFilter("past")}
+            >
               Past Work ({counts.past})
             </Chip>
           </div>
@@ -96,7 +106,7 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
         </div>
       </section>
 
-      {/* Properties Grid */}
+      {/* Properties Grid / Empty state */}
       {filtered.length === 0 ? (
         <section className={glass}>
           <div className="py-10 text-center">
@@ -104,8 +114,8 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
             <p className="mb-2 text-lg text-white">No properties found</p>
             <p className={textMeta}>
               {searchQuery || filter !== "all"
-                ? "No properties match your filters"
-                : "Start documenting document-completed-work-submissions-records-records to see properties here"}
+                ? "No properties match your filters."
+                : "Start documenting completed work to see properties here."}
             </p>
             {(searchQuery || filter !== "all") && (
               <button
@@ -132,18 +142,22 @@ export function PropertiesClient({ properties }: PropertiesClientProps) {
 }
 
 function PropertyCard({ property }: { property: Property }) {
+  const cityState = [property.city, property.state].filter(Boolean).join(", ");
+
   return (
     <Link
-      href={`/pro/properties/${property.id}`}
+      href={`/pro/contractor/properties/${property.id}`}
       className={`${glass} group block transition hover:bg-white/15`}
     >
       {/* Property Image */}
       <div className="relative mb-4 h-48 overflow-hidden rounded-lg bg-white/5">
         {property.imageUrl ? (
-          <img
+          <Image
             src={property.imageUrl}
             alt={property.address}
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            fill
+            className="object-cover transition group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 33vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -162,9 +176,7 @@ function PropertyCard({ property }: { property: Property }) {
         <h3 className={`mb-1 font-semibold ${heading} line-clamp-1`}>
           {property.address}
         </h3>
-        <p className={`mb-3 text-sm ${textMeta}`}>
-          {[property.city, property.state].filter(Boolean).join(", ")}
-        </p>
+        <p className={`mb-3 text-sm ${textMeta}`}>{cityState}</p>
 
         <div className={`mb-3 text-sm ${textMeta}`}>
           <p>👤 {property.homeownerName}</p>
@@ -173,8 +185,8 @@ function PropertyCard({ property }: { property: Property }) {
         {/* Stats */}
         <div className="flex items-center justify-between border-t border-white/10 pt-3">
           <div className={`text-sm ${textMeta}`}>
-            <span className="font-medium text-white">{property.jobCount}</span> job
-            {property.jobCount !== 1 ? "s" : ""}
+            <span className="font-medium text-white">{property.jobCount}</span>{" "}
+            job{property.jobCount !== 1 ? "s" : ""}
           </div>
           {property.lastWorkDate && (
             <div className={`text-xs ${textMeta}`}>

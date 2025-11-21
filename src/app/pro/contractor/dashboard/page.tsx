@@ -129,7 +129,7 @@ export default async function ProDashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Work Requests Card */}
           <Link
-            href="/pro/contractor/work-requests"
+            href="/pro/contractor/job-requests"
             className={`${glass} hover:bg-white/10 transition-colors group`}
           >
             <div className="flex items-start justify-between">

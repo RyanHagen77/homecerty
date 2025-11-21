@@ -16,12 +16,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
-import {
-  glass,
-  glassTight,
-  heading,
-  textMeta,
-} from "@/lib/glass";
+import { glass, glassTight, heading, textMeta } from "@/lib/glass";
 
 export default async function HomeMessagesPage({
   params,
@@ -107,12 +102,12 @@ export default async function HomeMessagesPage({
   });
 
   const addrLine = [home.address, home.city, home.state]
-  .filter(Boolean)
-  .join(", ");
+    .filter(Boolean)
+    .join(", ");
 
   // Format conversations
   const conversations = connections
-    .filter((conn) => conn.contractor !== null) // Filter out connections without contractors
+    .filter((conn) => conn.contractor !== null)
     .map((conn) => {
       const lastMessage = conn.messages[0];
       const unreadCount = conn._count.messages;
@@ -120,7 +115,11 @@ export default async function HomeMessagesPage({
       return {
         connectionId: conn.id,
         contractor: {
-          name: conn.contractor!.proProfile?.businessName || conn.contractor!.name || conn.contractor!.email || "Contractor",
+          name:
+            conn.contractor!.proProfile?.businessName ||
+            conn.contractor!.name ||
+            conn.contractor!.email ||
+            "Contractor",
           image: conn.contractor!.image,
         },
         property: {
@@ -143,11 +142,13 @@ export default async function HomeMessagesPage({
     <main className="relative min-h-screen text-white">
       <Bg />
 
-      <div className="mx-auto max-w-4xl space-y-6 p-6">
-
+      <div className="mx-auto max-w-6xl space-y-6 p-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm">
-          <Link href={`/home/${homeId}`} className="text-white/70 hover:text-white transition-colors">
+          <Link
+            href={`/home/${homeId}`}
+            className="text-white/70 hover:text-white transition-colors"
+          >
             {addrLine}
           </Link>
           <span className="text-white/50">/</span>
@@ -156,30 +157,37 @@ export default async function HomeMessagesPage({
 
         {/* Header */}
         <section className={glass}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Link
-                href={`/home/${homeId}`}
-                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
-                aria-label="Back to home"
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/home/${homeId}`}
+              className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+              aria-label="Back to home"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                </svg>
-              </Link>
-              <div className="flex-1 min-w-0">
-                <h1 className={`text-2xl font-bold ${heading}`}>Messages</h1>
-                <p className={`text-sm ${textMeta} mt-1`}>
-                  {conversations.length} {conversations.length === 1 ? "conversation" : "conversations"}
-                </p>
-              </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.5 19.5L3 12m0 0 7.5-7.5M3 12h18"
+                />
+              </svg>
+            </Link>
+
+            <div className="flex-1 min-w-0">
+              <h1 className={`text-2xl font-bold ${heading}`}>Messages</h1>
+              <p className={`mt-1 text-sm ${textMeta}`}>
+                Conversations with contractors for this home.
+              </p>
+              <p className={`mt-1 text-xs ${textMeta}`}>
+                {conversations.length}{" "}
+                {conversations.length === 1 ? "conversation" : "conversations"}
+              </p>
             </div>
           </div>
         </section>
@@ -223,25 +231,26 @@ export default async function HomeMessagesPage({
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="mb-1 flex items-center justify-between gap-2">
                       <p className="font-medium text-white truncate">
                         {conv.contractor.name}
                       </p>
                       {conv.lastMessage && (
                         <p className={`text-xs ${textMeta} flex-shrink-0`}>
-                          {formatDistanceToNow(new Date(conv.lastMessage.createdAt), {
-                            addSuffix: true,
-                          })}
+                          {formatDistanceToNow(
+                            new Date(conv.lastMessage.createdAt),
+                            { addSuffix: true }
+                          )}
                         </p>
                       )}
                     </div>
                     {conv.lastMessage && (
                       <p
-                        className={`text-sm ${
+                        className={`mt-1 truncate text-sm ${
                           conv.unreadCount > 0
                             ? "text-white font-medium"
                             : textMeta
-                        } truncate mt-1`}
+                        }`}
                       >
                         {conv.lastMessage.content}
                       </p>

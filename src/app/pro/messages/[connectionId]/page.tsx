@@ -37,12 +37,15 @@ export default async function ChatPage({
   const { connectionId } = await params;
   const userId = session.user.id;
 
-  // Get connection details
-  // Note: Currently only supports contractors
+  // Get connection details (supports any pro type)
   const connection = await prisma.connection.findFirst({
     where: {
       id: connectionId,
-      contractorId: userId,
+      OR: [
+        { contractorId: userId },
+        { realtorId: userId },
+        { inspectorId: userId },
+      ],
     },
     include: {
       homeowner: {
@@ -96,7 +99,10 @@ export default async function ChatPage({
 
   const otherUser = {
     id: connection.homeowner.id,
-    name: connection.homeowner.name || connection.homeowner.email || "Homeowner",
+    name:
+      connection.homeowner.name ||
+      connection.homeowner.email ||
+      "Homeowner",
     image: connection.homeowner.image,
   };
 
@@ -106,27 +112,67 @@ export default async function ChatPage({
     state: connection.home.state,
   };
 
+  const addressLine = [property.address, property.city, property.state]
+    .filter(Boolean)
+    .join(", ");
+
   return (
-    <main className="relative flex h-screen flex-col text-white">
+    <main className="relative min-h-screen text-white">
       <Bg />
 
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-white/10 bg-black/30 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 p-4">
+      <div className="mx-auto flex h-screen max-w-4xl flex-col gap-4 p-4">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm">
+          <Link
+            href="/pro"
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            Dashboard
+          </Link>
+          <span className="text-white/50">/</span>
           <Link
             href="/pro/messages"
-            className="text-white/70 hover:text-white"
+            className="text-white/70 hover:text-white transition-colors"
           >
-            ← Back
+            Messages
           </Link>
-          <div className="flex flex-1 items-center gap-3 min-w-0">
+          <span className="text-white/50">/</span>
+          <span className="text-white truncate max-w-[40%]">
+            {otherUser.name}
+          </span>
+        </nav>
+
+        {/* Chat header */}
+        <section className={glass}>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/pro/messages"
+              className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+              aria-label="Back to messages"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.5 19.5L3 12m0 0 7.5-7.5M3 12h18"
+                />
+              </svg>
+            </Link>
+
             {otherUser.image ? (
               <Image
                 src={otherUser.image}
                 alt={otherUser.name}
                 width={40}
                 height={40}
-                className="rounded-full"
+                className="rounded-full flex-shrink-0"
               />
             ) : (
               <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
@@ -135,25 +181,33 @@ export default async function ChatPage({
                 </span>
               </div>
             )}
+
             <div className="min-w-0">
-              <p className="font-medium text-white truncate">{otherUser.name}</p>
-              <p className={`text-sm ${textMeta} truncate`}>
-                {property.address}
-                {property.city && `, ${property.city}`}
-              </p>
+              <h1
+                className={`text-lg font-semibold ${heading} truncate`}
+              >
+                {otherUser.name}
+              </h1>
+              {addressLine && (
+                <p className={`text-sm ${textMeta} truncate`}>
+                  {addressLine}
+                </p>
+              )}
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-hidden">
-        <MessageThread
-          connectionId={connectionId}
-          initialMessages={messages}
-          currentUserId={userId}
-          otherUser={otherUser}
-        />
+        {/* Messages thread */}
+        <section className={`${glass} flex min-h-0 flex-1 overflow-hidden`}>
+          <div className="flex-1 overflow-hidden">
+            <MessageThread
+              connectionId={connectionId}
+              initialMessages={messages}
+              currentUserId={userId}
+              otherUser={otherUser}
+            />
+          </div>
+        </section>
       </div>
     </main>
   );

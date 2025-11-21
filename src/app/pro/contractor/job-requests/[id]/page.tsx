@@ -15,15 +15,34 @@ import { redirect, notFound } from "next/navigation";
 import { getSignedGetUrl, extractS3Key } from "@/lib/s3";
 import Image from "next/image";
 import Link from "next/link";
-import { glass, heading, textMeta } from "@/lib/glass";
+import { glass, glassTight, heading, textMeta } from "@/lib/glass";
 import { format } from "date-fns";
-import { ContractorJobRequestActions } from "../_components/ContractorJobRequestActions";
+import { ContractorJobRequestActions } from "../../../_components/ContractorJobRequestActions";
+import type { Decimal } from "@prisma/client/runtime/library";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function ContractorJobRequestDetailPage({ params }: PageProps) {
+type QuoteItemForDisplay = {
+  id: string;
+  item: string;
+  qty: Decimal;
+  unitPrice: Decimal;
+  total: Decimal;
+};
+
+type JobRequestForContractorActions = {
+  id: string;
+  status: string;
+  quote: { id: string } | null;
+  workRecord: { id: string } | null;
+  contractorNotes: string | null;
+};
+
+export default async function ContractorJobRequestDetailPage({
+  params,
+}: PageProps) {
   const { id } = await params;
   const session = await getServerSession(authConfig);
 
@@ -92,7 +111,7 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
 
   // Verify contractor assignment
   if (jobRequest.contractorId !== session.user.id) {
-    redirect("/contractor");
+    redirect("/pro/contractor");
   }
 
   // Sign photo URLs
@@ -103,51 +122,142 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
     })
   );
 
-  const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-    PENDING: { label: "Pending", color: "text-orange-300", bg: "bg-orange-500/10 border-orange-500/30" },
-    QUOTED: { label: "Quoted", color: "text-blue-300", bg: "bg-blue-500/10 border-blue-500/30" },
-    ACCEPTED: { label: "Accepted", color: "text-green-300", bg: "bg-green-500/10 border-green-500/30" },
-    IN_PROGRESS: { label: "In Progress", color: "text-purple-300", bg: "bg-purple-500/10 border-purple-500/30" },
-    COMPLETED: { label: "Completed", color: "text-emerald-300", bg: "bg-emerald-500/10 border-emerald-500/30" },
-    DECLINED: { label: "Declined", color: "text-gray-300", bg: "bg-gray-500/10 border-gray-500/30" },
-    CANCELLED: { label: "Cancelled", color: "text-gray-300", bg: "bg-gray-500/10 border-gray-500/30" },
+  // Plain object for the client actions component (no Decimals)
+  const jobRequestForActions: JobRequestForContractorActions = {
+    id: jobRequest.id,
+    status: jobRequest.status,
+    quote: jobRequest.quote ? { id: jobRequest.quote.id } : null,
+    workRecord: jobRequest.workRecord
+      ? { id: jobRequest.workRecord.id }
+      : null,
+    contractorNotes: jobRequest.contractorNotes,
+  };
+
+  const statusConfig: Record<
+    string,
+    { label: string; color: string; bg: string }
+  > = {
+    PENDING: {
+      label: "Pending",
+      color: "text-orange-300",
+      bg: "bg-orange-500/10 border-orange-500/30",
+    },
+    QUOTED: {
+      label: "Quoted",
+      color: "text-blue-300",
+      bg: "bg-blue-500/10 border-blue-500/30",
+    },
+    ACCEPTED: {
+      label: "Accepted",
+      color: "text-green-300",
+      bg: "bg-green-500/10 border-green-500/30",
+    },
+    IN_PROGRESS: {
+      label: "In Progress",
+      color: "text-purple-300",
+      bg: "bg-purple-500/10 border-purple-500/30",
+    },
+    COMPLETED: {
+      label: "Completed",
+      color: "text-emerald-300",
+      bg: "bg-emerald-500/10 border-emerald-500/30",
+    },
+    DECLINED: {
+      label: "Declined",
+      color: "text-gray-300",
+      bg: "bg-gray-500/10 border-gray-500/30",
+    },
+    CANCELLED: {
+      label: "Cancelled",
+      color: "text-gray-300",
+      bg: "bg-gray-500/10 border-gray-500/30",
+    },
   };
 
   const status = statusConfig[jobRequest.status] || statusConfig.PENDING;
 
+  const addrLine = [
+    jobRequest.home.address,
+    jobRequest.home.city,
+    jobRequest.home.state,
+    jobRequest.home.zip,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const title = jobRequest.title || "Job Request";
+
   return (
     <main className="relative min-h-screen text-white">
       <Bg />
-      <div className="mx-auto max-w-5xl space-y-6 p-6">
+
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm">
+          <Link
+            href="/pro/contractor"
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            Dashboard
+          </Link>
+          <span className="text-white/50">/</span>
+          <Link
+            href="/pro/contractor/job-requests"
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            Job Requests
+          </Link>
+          <span className="text-white/50">/</span>
+          <span className="text-white truncate max-w-[50%]">
+            {title}
+          </span>
+        </nav>
+
         {/* Header */}
-        <div className={glass}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className={`text-2xl font-semibold ${heading}`}>
-                  {jobRequest.title}
+        <section className={glass}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Link
+                href="/pro/contractor/job-requests"
+                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+                aria-label="Back to job requests"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                  />
+                </svg>
+              </Link>
+
+              <div className="flex-1 min-w-0">
+                <h1 className={`text-2xl font-bold ${heading} truncate`}>
+                  {title}
                 </h1>
-                <span className={`rounded-full border px-3 py-1 text-sm font-medium ${status.bg} ${status.color}`}>
-                  {status.label}
-                </span>
+                <p className={`text-sm ${textMeta} mt-1`}>{addrLine}</p>
               </div>
-              <p className={textMeta}>
-                {jobRequest.home.address}, {jobRequest.home.city}, {jobRequest.home.state}
-              </p>
             </div>
-            <Link
-              href="/contractor/job-requests"
-              className={`text-sm ${textMeta} hover:text-white whitespace-nowrap`}
+
+            <span
+              className={`flex-shrink-0 rounded-full border px-3 py-1 text-sm font-medium ${status.bg} ${status.color}`}
             >
-              ← Back to Requests
-            </Link>
+              {status.label}
+            </span>
           </div>
-        </div>
+        </section>
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - Request Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Description */}
             <section className={glass}>
               <h2 className={`mb-3 text-lg font-semibold ${heading}`}>
@@ -215,7 +325,8 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
                   <div className="flex gap-3">
                     <dt className={`w-32 ${textMeta}`}>Budget Range:</dt>
                     <dd className="text-white">
-                      ${Number(jobRequest.budgetMin || 0).toLocaleString()} - $
+                      $
+                      {Number(jobRequest.budgetMin || 0).toLocaleString()} - $
                       {Number(jobRequest.budgetMax || 0).toLocaleString()}
                     </dd>
                   </div>
@@ -224,21 +335,30 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
                   <div className="flex gap-3">
                     <dt className={`w-32 ${textMeta}`}>Preferred Date:</dt>
                     <dd className="text-white">
-                      {format(new Date(jobRequest.desiredDate), "MMM d, yyyy")}
+                      {format(
+                        new Date(jobRequest.desiredDate),
+                        "MMM d, yyyy"
+                      )}
                     </dd>
                   </div>
                 )}
                 <div className="flex gap-3">
                   <dt className={`w-32 ${textMeta}`}>Requested:</dt>
                   <dd className="text-white">
-                    {format(new Date(jobRequest.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                    {format(
+                      new Date(jobRequest.createdAt),
+                      "MMM d, yyyy 'at' h:mm a"
+                    )}
                   </dd>
                 </div>
                 {jobRequest.respondedAt && (
                   <div className="flex gap-3">
                     <dt className={`w-32 ${textMeta}`}>Responded:</dt>
                     <dd className="text-white">
-                      {format(new Date(jobRequest.respondedAt), "MMM d, yyyy 'at' h:mm a")}
+                      {format(
+                        new Date(jobRequest.respondedAt),
+                        "MMM d, yyyy 'at' h:mm a"
+                      )}
                     </dd>
                   </div>
                 )}
@@ -260,7 +380,7 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
             {/* Your Quote */}
             {jobRequest.quote && (
               <section className={glass}>
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex items-center justify-between">
                   <h2 className={`text-lg font-semibold ${heading}`}>
                     Your Quote
                   </h2>
@@ -275,33 +395,47 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
                   </p>
                 )}
 
-                {jobRequest.quote.items && jobRequest.quote.items.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-white/80">Line Items:</h3>
-                    <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                      {jobRequest.quote.items.map((item: any) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between gap-4 border-b border-white/5 px-4 py-3 last:border-0"
-                        >
-                          <div className="flex-1">
-                            <p className="text-sm text-white">{item.item}</p>
-                            <p className={`text-xs ${textMeta}`}>
-                              {Number(item.qty)} × ${Number(item.unitPrice).toLocaleString()}
-                            </p>
-                          </div>
-                          <p className="text-sm font-semibold text-white">
-                            ${Number(item.total).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
+                {jobRequest.quote.items &&
+                  jobRequest.quote.items.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-white/80">
+                        Line Items:
+                      </h3>
+                      <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                        {jobRequest.quote.items.map(
+                          (item: QuoteItemForDisplay) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-4 border-b border-white/5 px-4 py-3 last:border-0"
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm text-white">
+                                  {item.item}
+                                </p>
+                                <p className={`text-xs ${textMeta}`}>
+                                  {Number(item.qty)} × $
+                                  {Number(
+                                    item.unitPrice
+                                  ).toLocaleString()}
+                                </p>
+                              </div>
+                              <p className="text-sm font-semibold text-white">
+                                ${Number(item.total).toLocaleString()}
+                              </p>
+                            </div>
+                          )
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {jobRequest.quote.expiresAt && (
                   <p className={`mt-4 text-xs ${textMeta}`}>
-                    Quote expires: {format(new Date(jobRequest.quote.expiresAt), "MMM d, yyyy")}
+                    Quote expires:{" "}
+                    {format(
+                      new Date(jobRequest.quote.expiresAt),
+                      "MMM d, yyyy"
+                    )}
                   </p>
                 )}
               </section>
@@ -314,15 +448,21 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
                   Work Completed
                 </h2>
                 <Link
-                  href={`/contractor/work/${jobRequest.workRecord.id}`}
-                  className="block rounded-lg border border-white/10 bg-white/5 p-4 hover:bg-white/10"
+                  href={`/pro/contractor/work/${jobRequest.workRecord.id}`}
+                  className={`${glassTight} block hover:bg-white/10`}
                 >
                   <p className="font-medium text-white">
                     {jobRequest.workRecord.workType}
                   </p>
-                  <p className={`text-sm ${textMeta}`}>
-                    Completed: {format(new Date(jobRequest.workRecord.workDate), "MMM d, yyyy")}
-                  </p>
+                  {jobRequest.workRecord.workDate && (
+                    <p className={`mt-1 text-sm ${textMeta}`}>
+                      Completed:{" "}
+                      {format(
+                        new Date(jobRequest.workRecord.workDate),
+                        "MMM d, yyyy"
+                      )}
+                    </p>
+                  )}
                   {jobRequest.workRecord.cost && (
                     <p className="mt-2 text-lg font-semibold text-white">
                       ${Number(jobRequest.workRecord.cost).toLocaleString()}
@@ -341,7 +481,7 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
                 Homeowner
               </h2>
               <div className="flex items-start gap-3">
-                {jobRequest.homeowner.image && (
+                {jobRequest.homeowner.image ? (
                   <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full">
                     <Image
                       src={jobRequest.homeowner.image}
@@ -351,10 +491,17 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
                       sizes="64px"
                     />
                   </div>
+                ) : (
+                  <div className="h-16 w-16 flex-shrink-0 rounded-full bg-white/10 flex items-center justify-center">
+                    <span className="text-2xl font-medium">
+                      {(jobRequest.homeowner.name ||
+                        "H")[0]?.toUpperCase() || "H"}
+                    </span>
+                  </div>
                 )}
                 <div className="flex-1">
                   <p className="font-semibold text-white">
-                    {jobRequest.homeowner.name}
+                    {jobRequest.homeowner.name || "Homeowner"}
                   </p>
                   <p className={`text-sm ${textMeta}`}>
                     ✉️ {jobRequest.homeowner.email}
@@ -363,10 +510,8 @@ export default async function ContractorJobRequestDetailPage({ params }: PagePro
               </div>
             </section>
 
-            {/* Actions */}
-            <ContractorJobRequestActions
-              jobRequest={jobRequest}
-            />
+            {/* Actions (client component gets plain, serialized subset) */}
+            <ContractorJobRequestActions jobRequest={jobRequestForActions} />
           </div>
         </div>
       </div>
