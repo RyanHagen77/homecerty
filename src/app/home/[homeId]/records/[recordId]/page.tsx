@@ -46,14 +46,15 @@ export default async function RecordDetailPage({ params }: PageProps) {
       address: true,
       city: true,
       state: true,
+      zip: true,
     },
   });
 
   if (!home) notFound();
 
-  const addrLine = `${home.address ?? ""}${home.city ? `, ${home.city}` : ""}${
-    home.state ? `, ${home.state}` : ""
-  }`;
+  const addrLine = `${home.address}${
+    home.city ? `, ${home.city}` : ""
+  }${home.state ? `, ${home.state}` : ""}${home.zip ? ` ${home.zip}` : ""}`;
 
   // Serialize for client component
   const serializedRecord = {
@@ -73,6 +74,19 @@ export default async function RecordDetailPage({ params }: PageProps) {
     (a) => !a.mimeType?.startsWith("image/")
   );
 
+  const hasMeta =
+    (record.date && record.date instanceof Date) ||
+    typeof record.date === "string" ||
+    record.vendor;
+
+  const dateLabel = record.date
+    ? new Date(record.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <main className="relative min-h-screen text-white">
       {/* Background */}
@@ -89,7 +103,7 @@ export default async function RecordDetailPage({ params }: PageProps) {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.45))]" />
       </div>
 
-      <div className="mx-auto max-w-4xl p-6 space-y-6">
+      <div className="mx-auto max-w-7xl p-6 space-y-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm">
           <Link
@@ -103,21 +117,23 @@ export default async function RecordDetailPage({ params }: PageProps) {
             href={`/home/${homeId}/records`}
             className="text-white/70 hover:text-white transition-colors"
           >
-            Records
+            Maintenance &amp; Repairs
           </Link>
           <span className="text-white/50">/</span>
-          <span className="text-white">{record.title}</span>
+          <span className="text-white truncate max-w-xs">
+            {record.title}
+          </span>
         </nav>
 
         {/* Header */}
         <section className={glass}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1 min-w-0">
               <div className="mb-2 flex items-center gap-3">
                 <Link
                   href={`/home/${homeId}/records`}
                   className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-white/30 bg-white/10 transition-colors hover:bg-white/15"
-                  aria-label="Back to records"
+                  aria-label="Back to maintenance & repairs"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -134,16 +150,30 @@ export default async function RecordDetailPage({ params }: PageProps) {
                     />
                   </svg>
                 </Link>
-                <h1 className={`text-2xl font-bold ${heading}`}>
+                <h1
+                  className={`truncate text-2xl font-bold ${heading}`}
+                >
                   {record.title}
                 </h1>
               </div>
+
               {record.kind && (
-                <span className="inline-flex items-center rounded-full bg-blue-400/20 px-3 py-1 text-sm font-medium text-blue-300">
-                  {record.kind}
-                </span>
+                <div className="mb-2">
+                  <span className="inline-flex items-center rounded-full bg-blue-400/20 px-3 py-1 text-sm font-medium text-blue-300">
+                    {record.kind}
+                  </span>
+                </div>
+              )}
+
+              {hasMeta && (
+                <p className={`text-sm ${textMeta}`}>
+                  {dateLabel && <>📅 {dateLabel}</>}
+                  {dateLabel && record.vendor && " • "}
+                  {record.vendor && <>🔧 {record.vendor}</>}
+                </p>
               )}
             </div>
+
             {/* Actions */}
             <RecordActions
               recordId={recordId}
@@ -173,7 +203,9 @@ export default async function RecordDetailPage({ params }: PageProps) {
               {record.vendor && (
                 <div>
                   <p className={`text-sm ${textMeta}`}>Vendor</p>
-                  <p className="font-medium text-white">{record.vendor}</p>
+                  <p className="font-medium text-white">
+                    {record.vendor}
+                  </p>
                 </div>
               )}
               {record.cost != null && (
@@ -211,15 +243,19 @@ export default async function RecordDetailPage({ params }: PageProps) {
         {/* Attachments */}
         {record.attachments.length > 0 && (
           <section className={glass}>
-            <h2 className={`text-lg font-semibold ${heading} mb-4`}>
+            <h2 className={`mb-4 text-lg font-semibold ${heading}`}>
               Attachments ({record.attachments.length})
             </h2>
 
             {/* Photos */}
             {imageAttachments.length > 0 && (
               <div className="mb-6">
-                <h3 className={`text-sm font-medium ${textMeta} mb-3`}>Photos</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <h3
+                  className={`mb-3 text-sm font-medium ${textMeta}`}
+                >
+                  Photos
+                </h3>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {imageAttachments.map((attachment) => {
                     const href = `/api/home/${homeId}/attachments/${attachment.id}`;
 
@@ -229,7 +265,7 @@ export default async function RecordDetailPage({ params }: PageProps) {
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5 group"
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5"
                       >
                         <Image
                           src={href}
@@ -239,14 +275,14 @@ export default async function RecordDetailPage({ params }: PageProps) {
                         />
 
                         {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
                             strokeWidth={2}
                             stroke="currentColor"
-                            className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-8 w-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
                           >
                             <path
                               strokeLinecap="round"
@@ -265,8 +301,12 @@ export default async function RecordDetailPage({ params }: PageProps) {
             {/* Documents */}
             {docAttachments.length > 0 && (
               <div>
-                <h3 className={`text-sm font-medium ${textMeta} mb-3`}>Documents</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <h3
+                  className={`mb-3 text-sm font-medium ${textMeta}`}
+                >
+                  Documents
+                </h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {docAttachments.map((attachment) => {
                     const href = `/api/home/${homeId}/attachments/${attachment.id}`;
 
@@ -276,9 +316,9 @@ export default async function RecordDetailPage({ params }: PageProps) {
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                        className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
                       >
-                        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded bg-white/10">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-white/10">
                           {attachment.mimeType?.includes("pdf") ? (
                             <span className="text-xl">📄</span>
                           ) : (
@@ -286,12 +326,15 @@ export default async function RecordDetailPage({ params }: PageProps) {
                           )}
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-medium truncate">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-white">
                             {attachment.filename}
                           </p>
                           <p className="text-xs text-white/60">
-                            {(Number(attachment.size) / 1024).toFixed(1)} KB
+                            {(
+                              Number(attachment.size) / 1024
+                            ).toFixed(1)}{" "}
+                            KB
                           </p>
                         </div>
 
@@ -301,7 +344,7 @@ export default async function RecordDetailPage({ params }: PageProps) {
                           viewBox="0 0 24 24"
                           strokeWidth={1.5}
                           stroke="currentColor"
-                          className="w-5 h-5 text-white/50"
+                          className="h-5 w-5 text-white/50"
                         >
                           <path
                             strokeLinecap="round"

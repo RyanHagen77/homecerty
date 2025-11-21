@@ -15,7 +15,6 @@ type ConnectionsModalProps = {
   loadingInvites: boolean;
   pendingJobRequestsCount?: number;
   loadingJobRequests?: boolean;
-  onOpenShareAction: () => void;
   onOpenVendorsAction: () => void;
 };
 
@@ -29,7 +28,6 @@ export function ConnectionsModal({
   loadingInvites,
   pendingJobRequestsCount = 0,
   loadingJobRequests = false,
-  onOpenShareAction,
   onOpenVendorsAction,
 }: ConnectionsModalProps) {
   if (!open) return null;
@@ -42,9 +40,9 @@ export function ConnectionsModal({
   return (
     <Modal open={open} onCloseAction={onCloseAction}>
       <div className="p-6">
-        <h2 className="mb-2 text-xl font-bold text-white">Connections & Work</h2>
+        <h2 className="mb-2 text-xl font-bold text-white">Connections &amp; Work</h2>
         <p className={`mb-6 text-sm ${textMeta}`}>
-          Manage professionals, pending work, and access for this home.
+          See jobs in progress and manage who you work with on this home.
         </p>
 
         <div className="space-y-6">
@@ -67,7 +65,7 @@ export function ConnectionsModal({
                         📋 Review Completed Work
                       </p>
                       <p className={`text-xs ${textMeta}`}>
-                        Contractors have submitted work for your approval
+                        Contractors have submitted work for your approval.
                       </p>
                     </div>
                     <span className="ml-3 flex-shrink-0 rounded-full bg-red-500/30 px-3 py-1 text-xs font-bold text-red-100">
@@ -88,7 +86,7 @@ export function ConnectionsModal({
                         💬 Job Requests Pending
                       </p>
                       <p className={`text-xs ${textMeta}`}>
-                        Waiting for contractor quotes or your acceptance
+                        Waiting on quotes or your approval.
                       </p>
                     </div>
                     <span className="ml-3 flex-shrink-0 rounded-full bg-blue-500/30 px-3 py-1 text-xs font-bold text-blue-100">
@@ -109,7 +107,7 @@ export function ConnectionsModal({
                         ✉️ Pending Invitations
                       </p>
                       <p className={`text-xs ${textMeta}`}>
-                        Invitations waiting for response
+                        Invites that haven&apos;t been accepted yet.
                       </p>
                     </div>
                     <span className="ml-3 flex-shrink-0 rounded-full bg-orange-500/30 px-3 py-1 text-xs font-bold text-orange-100">
@@ -124,11 +122,10 @@ export function ConnectionsModal({
           {/* ========== WORK & SERVICES ========== */}
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/60">
-              Work & Services
+              Work &amp; Services
             </h3>
             <div className="space-y-2">
-
-              {/* View all work */}
+              {/* Requests & submissions */}
               <Link
                 href={`/home/${homeId}/completed-work-submissions`}
                 onClick={onCloseAction}
@@ -139,13 +136,21 @@ export function ConnectionsModal({
                     📝 Requests &amp; Submissions
                   </p>
                   <p className={`text-xs ${textMeta}`}>
-                    Request job quotes, review/approve completed work submissions
+                    Request work, track quotes, and approve jobs.
                   </p>
                 </div>
                 <span className="text-white/40">→</span>
               </Link>
+            </div>
+          </div>
 
-              {/* Find pros */}
+          {/* ========== CONNECTIONS ========== */}
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/60">
+              Connections
+            </h3>
+            <div className="space-y-2">
+              {/* Find pros (moved here, top of section) */}
               <button
                 type="button"
                 onClick={onOpenVendorsAction}
@@ -156,20 +161,12 @@ export function ConnectionsModal({
                     🔍 Find &amp; Connect Pros
                   </p>
                   <p className={`text-xs ${textMeta}`}>
-                    Browse and connect with verified contractors
+                    Browse and connect with trusted contractors.
                   </p>
                 </div>
                 <span className="text-white/40">→</span>
               </button>
-            </div>
-          </div>
 
-          {/* ========== CONNECTIONS ========== */}
-          <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/60">
-              Connections
-            </h3>
-            <div className="space-y-2">
               {/* My contractors */}
               <Link
                 href={`/home/${homeId}/contractors`}
@@ -181,30 +178,13 @@ export function ConnectionsModal({
                     👷 My Contractors
                   </p>
                   <p className={`text-xs ${textMeta}`}>
-                    View and manage your connected professionals
+                    View and manage your connected pros.
                   </p>
                 </div>
                 <span className="text-white/40">→</span>
               </Link>
 
-              {/* Share access */}
-              <button
-                type="button"
-                onClick={onOpenShareAction}
-                className={`${glass} flex w-full items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-left hover:bg-white/10`}
-              >
-                <div>
-                  <p className="text-sm font-medium text-white">
-                    👥 Share Access
-                  </p>
-                  <p className={`text-xs ${textMeta}`}>
-                    Give others view or edit access to this home
-                  </p>
-                </div>
-                <span className="text-white/40">→</span>
-              </button>
-
-              {/* Invitations */}
+              {/* Invitations (bottom of section) */}
               <Link
                 href={`/home/${homeId}/invitations`}
                 onClick={onCloseAction}
@@ -215,7 +195,7 @@ export function ConnectionsModal({
                     ✉️ All Invitations
                   </p>
                   <p className={`text-xs ${textMeta}`}>
-                    View sent and received invitations
+                    See all sent and received invites.
                   </p>
                 </div>
                 <span className="text-white/40">→</span>

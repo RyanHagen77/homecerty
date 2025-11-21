@@ -214,6 +214,9 @@ export async function PATCH(
       updateData.budgetMax = body.budgetMax ? parseFloat(body.budgetMax) : null;
     if (body.desiredDate !== undefined)
       updateData.desiredDate = body.desiredDate ? new Date(body.desiredDate) : null;
+    if (body.photos !== undefined) {
+      updateData.photos = body.photos;
+    }
 
     // Update job request
     const jobRequest = await prisma.jobRequest.update({

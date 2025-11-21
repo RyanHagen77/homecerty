@@ -28,65 +28,56 @@ export function InviteProModal({
   if (!open) return null;
 
   async function handleInvite() {
-  const trimmedEmail = email.trim();
-  if (!trimmedEmail || !trimmedEmail.includes("@")) return;
+    const trimmedEmail = email.trim();
 
-  setLoading(true);
-  try {
-    const res = await fetch("/api/invitations/home-to-pro", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        homeId,
-        email: trimmedEmail,
-        message: message.trim() || undefined,
-      }),
-    });
-
-    const payload = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      const msg = (payload && payload.error) || "Failed to send invitation";
-
-      console.log("ERROR OCCURRED:", msg); // 🔍 DEBUG
-      console.log("Toast function:", toast); // 🔍 DEBUG
-
-      // Known validation / duplicate cases
-      if (res.status === 400 || res.status === 409) {
-        toast(msg);
-        console.log("Toast called after 400/409"); // 🔍 DEBUG
-        return;
-      }
-
-      // Unknown server error
-      console.error("Invite API error:", payload);
-      toast(msg);
-      console.log("Toast called for unknown error"); // 🔍 DEBUG
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      toast("Please enter a valid email address.");
       return;
     }
 
-    // Success
-    console.log("SUCCESS - calling toast"); // 🔍 DEBUG
-    toast("Invitation sent successfully!");
-    onCloseAction();
-    setEmail("");
-    setMessage("");
-  } catch (error) {
-    console.error("Error sending invitation:", error);
-    console.log("CATCH block - calling toast"); // 🔍 DEBUG
-    toast("Something went wrong sending the invitation. Please try again.");
-  } finally {
-    setLoading(false);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/invitations/home-to-pro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          homeId,
+          email: trimmedEmail,
+          message: message.trim() || undefined,
+        }),
+      });
+
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        const msg = payload?.error || "Failed to send invitation";
+        toast(msg);
+        return;
+      }
+
+      toast("Invitation sent successfully!");
+      onCloseAction();
+      setEmail("");
+      setMessage("");
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      toast("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   return (
     <Modal open={open} onCloseAction={onCloseAction}>
       <div className="p-6">
-        <h2 className="mb-2 text-xl font-bold text-white">Invite a Pro</h2>
-        <p className={`mb-4 text-sm ${textMeta}`}>For {homeAddress}</p>
+        <h2 className="mb-1 text-xl font-bold text-white">Invite a Pro</h2>
+        <p className={`mb-4 text-xs text-white/70 ${textMeta}`}>
+          For {homeAddress}
+        </p>
 
         <div className="space-y-4">
+          {/* Email */}
           <div>
             <label className="mb-1 block text-sm font-medium text-white">
               Pro&apos;s Email
@@ -98,8 +89,12 @@ export function InviteProModal({
               placeholder="pro@example.com"
               autoFocus
             />
+            <p className={`mt-1 text-xs ${textMeta}`}>
+              We’ll send them a secure link to connect to this home.
+            </p>
           </div>
 
+          {/* Message */}
           <div>
             <label className="mb-1 block text-sm font-medium text-white">
               Message (Optional)
@@ -107,12 +102,13 @@ export function InviteProModal({
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full rounded-md border border-white/15 bg-white/10 px-4 py-2 text-white outline-none backdrop-blur placeholder:text-white/40"
+              className="w-full rounded-md border border-white/15 bg-white/10 px-4 py-2 text-sm text-white outline-none backdrop-blur placeholder:text-white/40"
               rows={3}
               placeholder="Add a short note so they know why you're inviting them…"
             />
           </div>
 
+          {/* Footer buttons */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
@@ -122,11 +118,12 @@ export function InviteProModal({
             >
               Cancel
             </button>
+
             <button
               type="button"
               onClick={handleInvite}
-              disabled={!email.includes("@") || loading}
-              className="rounded-lg bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-sm font-medium text-white hover:from-orange-600 hover:to-red-600 disabled:opacity-50"
+              disabled={loading || !email.trim()}
+              className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
             >
               {loading ? "Sending…" : "Send Invitation"}
             </button>

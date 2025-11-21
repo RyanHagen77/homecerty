@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { fieldLabel } from "@/components/ui";
 import { Button, GhostButton } from "@/components/ui/Button";
+import { X, Upload } from "lucide-react";
 
 type Connection = {
   id: string;
@@ -29,6 +30,11 @@ type Props = {
   connections: Connection[];
 };
 
+type PhotoFile = {
+  file: File;
+  preview: string;
+};
+
 const CATEGORIES = [
   "Plumbing",
   "Electrical",
@@ -45,9 +51,18 @@ const CATEGORIES = [
   "Other",
 ];
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_PHOTOS = 10;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 export function RequestWorkForm({ homeId, connections }: Props) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [photos, setPhotos] = useState<PhotoFile[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     connectionId: "",
     contractorId: "",
@@ -57,7 +72,7 @@ export function RequestWorkForm({ homeId, connections }: Props) {
     urgency: "NORMAL",
     budgetMin: "",
     budgetMax: "",
-    timeframe: "", // Changed from desiredDate
+    timeframe: "",
   });
 
   const handleContractorChange = (connectionId: string) => {
@@ -68,6 +83,110 @@ export function RequestWorkForm({ homeId, connections }: Props) {
         connectionId,
         contractorId: connection.contractor.id,
       });
+    }
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadError(null);
+
+    // Validate total number of photos
+    if (photos.length + files.length > MAX_PHOTOS) {
+      setUploadError(`You can only upload up to ${MAX_PHOTOS} photos`);
+      return;
+    }
+
+    // Validate each file
+    const validFiles: PhotoFile[] = [];
+    for (const file of files) {
+      // Check file type
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setUploadError(`${file.name} is not a supported image format. Please use JPG, PNG, or WebP.`);
+        continue;
+      }
+
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(`${file.name} is too large. Maximum file size is 10MB.`);
+        continue;
+      }
+
+      // Create preview
+      const preview = URL.createObjectURL(file);
+      validFiles.push({ file, preview });
+    }
+
+    setPhotos([...photos, ...validFiles]);
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    const newPhotos = [...photos];
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(newPhotos[index].preview);
+    newPhotos.splice(index, 1);
+    setPhotos(newPhotos);
+  };
+
+  /**
+   * Upload photos using the existing presigned URL system
+   * This follows the same pattern as work record attachments
+   */
+  const uploadPhotos = async (jobRequestId: string): Promise<string[]> => {
+    if (photos.length === 0) return [];
+
+    setUploadingPhotos(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const photo of photos) {
+        // Step 1: Get presigned URL from your existing endpoint
+        const presignRes = await fetch("/api/uploads/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            homeId,
+            recordId: jobRequestId, // Using job request ID as the entity ID
+            filename: photo.file.name,
+            contentType: photo.file.type,
+            size: photo.file.size,
+          }),
+        });
+
+        if (!presignRes.ok) {
+          const error = await presignRes.json();
+          throw new Error(error.error || "Failed to get upload URL");
+        }
+
+        const { url, publicUrl } = await presignRes.json();
+
+        // Step 2: Upload file to S3 using presigned URL
+        const uploadRes = await fetch(url, {
+          method: "PUT",
+          body: photo.file,
+          headers: {
+            "Content-Type": photo.file.type,
+          },
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error(`Failed to upload ${photo.file.name}`);
+        }
+
+        // Step 3: Store the public URL
+        uploadedUrls.push(publicUrl);
+      }
+
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error uploading photos:", error);
+      throw error;
+    } finally {
+      setUploadingPhotos(false);
     }
   };
 
@@ -88,23 +207,20 @@ export function RequestWorkForm({ homeId, connections }: Props) {
       if (form.timeframe === "TODAY") {
         desiredDate = today.toISOString();
       } else if (form.timeframe === "ASAP") {
-        // Set to tomorrow
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         desiredDate = tomorrow.toISOString();
       } else if (form.timeframe === "SOON") {
-        // Set to 3 days from now
         const threeDays = new Date(today);
         threeDays.setDate(threeDays.getDate() + 3);
         desiredDate = threeDays.toISOString();
       } else if (form.timeframe === "1-2_WEEKS") {
-        // Set to 1 week from now
         const oneWeek = new Date(today);
         oneWeek.setDate(oneWeek.getDate() + 7);
         desiredDate = oneWeek.toISOString();
       }
-      // NO_RUSH = null (no date specified)
 
+      // Step 1: Create job request first (without photos)
       const res = await fetch(`/api/home/${homeId}/requested-jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,6 +234,7 @@ export function RequestWorkForm({ homeId, connections }: Props) {
           budgetMin: form.budgetMin ? parseFloat(form.budgetMin) : null,
           budgetMax: form.budgetMax ? parseFloat(form.budgetMax) : null,
           desiredDate,
+          photos: [], // Empty for now
         }),
       });
 
@@ -127,6 +244,35 @@ export function RequestWorkForm({ homeId, connections }: Props) {
       }
 
       const { jobRequest } = await res.json();
+
+      // Step 2: Upload photos using presigned URLs (if any)
+      let photoUrls: string[] = [];
+      if (photos.length > 0) {
+        try {
+          photoUrls = await uploadPhotos(jobRequest.id);
+
+          // Step 3: Update job request with photo URLs
+          const updateRes = await fetch(`/api/home/${homeId}/requested-jobs/${jobRequest.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              photos: photoUrls,
+            }),
+          });
+
+          if (!updateRes.ok) {
+            console.error("Failed to update job request with photos");
+            // Don't fail the whole request if photo update fails
+          }
+        } catch (photoError) {
+          console.error("Error uploading photos:", photoError);
+          // Continue anyway - job request was created
+          alert("Job request created but some photos failed to upload");
+        }
+      }
+
+      // Clean up object URLs
+      photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
 
       // Redirect to the job request detail page
       router.push(`/home/${homeId}/requested-jobs/${jobRequest.id}`);
@@ -248,6 +394,79 @@ export function RequestWorkForm({ homeId, connections }: Props) {
         </label>
       </div>
 
+      {/* Photo Upload */}
+      <div>
+        <label className="block">
+          <span className={fieldLabel}>Photos (Optional)</span>
+          <p className="mt-1 text-xs text-white/60">
+            Add photos to help the contractor understand the work needed. Max {MAX_PHOTOS} photos, 10MB each.
+          </p>
+        </label>
+
+        {/* Upload Button */}
+        <div className="mt-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            multiple
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={photos.length >= MAX_PHOTOS}
+            className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Upload className="h-5 w-5" />
+            <span>Upload Photos</span>
+          </button>
+        </div>
+
+        {/* Upload Error */}
+        {uploadError && (
+          <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+            {uploadError}
+          </div>
+        )}
+
+        {/* Photo Previews */}
+        {photos.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {photos.map((photo, index) => (
+              <div
+                key={index}
+                className="group relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5"
+              >
+                <Image
+                  src={photo.preview}
+                  alt={`Preview ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(index)}
+                  className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition group-hover:opacity-100"
+                  aria-label="Remove photo"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 transition group-hover:opacity-100" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {photos.length > 0 && (
+          <p className="mt-2 text-xs text-white/60">
+            {photos.length} of {MAX_PHOTOS} photos selected
+          </p>
+        )}
+      </div>
+
       {/* Category & Urgency */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -348,11 +567,16 @@ export function RequestWorkForm({ homeId, connections }: Props) {
         <GhostButton
           type="button"
           onClick={() => router.back()}
+          disabled={submitting || uploadingPhotos}
         >
           Cancel
         </GhostButton>
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Sending Request..." : "Send Request"}
+        <Button type="submit" disabled={submitting || uploadingPhotos}>
+          {uploadingPhotos
+            ? "Uploading photos..."
+            : submitting
+            ? "Sending Request..."
+            : "Send Request"}
         </Button>
       </div>
     </form>

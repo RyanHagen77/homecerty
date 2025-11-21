@@ -1,4 +1,3 @@
-// app/home/[homeId]/records/page.tsx
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
@@ -40,7 +39,9 @@ export default async function RecordsPage({
 
   if (!home) notFound();
 
-  const addrLine = `${home.address}${home.city ? `, ${home.city}` : ""}${home.state ? `, ${home.state}` : ""}${home.zip ? ` ${home.zip}` : ""}`;
+  const addrLine = `${home.address}${
+    home.city ? `, ${home.city}` : ""
+  }${home.state ? `, ${home.state}` : ""}${home.zip ? ` ${home.zip}` : ""}`;
 
   // Build query filters
   const where: {
@@ -101,12 +102,12 @@ export default async function RecordsPage({
     },
   });
 
-  // ✅ Serialize Decimal, Date, and bigint
-  const records = recordsRaw.map(record => ({
+  // Serialize Decimal, Date, and bigint
+  const records = recordsRaw.map((record) => ({
     ...record,
     date: record.date ? record.date.toISOString() : null,
     cost: record.cost ? Number(record.cost) : null,
-    attachments: record.attachments.map(att => ({
+    attachments: record.attachments.map((att) => ({
       ...att,
       size: Number(att.size),
     })),
@@ -126,37 +127,28 @@ export default async function RecordsPage({
 
   return (
     <main className="relative min-h-screen text-white">
-      <div className="fixed inset-0 -z-50">
-        <Image
-          src="/myhomedox_home3.webp"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover object-center"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.45))]" />
-      </div>
+      <Bg />
 
-      <div className="mx-auto max-w-7xl p-6 space-y-6">
-
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm">
-          <Link href={`/home/${homeId}`} className="text-white/70 hover:text-white transition-colors">
+          <Link
+            href={`/home/${homeId}`}
+            className="text-white/70 transition-colors hover:text-white"
+          >
             {addrLine}
           </Link>
           <span className="text-white/50">/</span>
-          <span className="text-white">Maintenance & Repairs</span>
+          <span className="text-white">Maintenance &amp; Repairs</span>
         </nav>
 
         {/* Header */}
         <section className={glass}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <Link
                 href={`/home/${homeId}`}
-                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border border-white/30 bg-white/10 hover:bg-white/15 transition-colors"
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-white/30 bg-white/10 transition-colors hover:bg-white/15"
                 aria-label="Back to home"
               >
                 <svg
@@ -165,42 +157,46 @@ export default async function RecordsPage({
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   stroke="currentColor"
-                  className="w-5 h-5"
+                  className="h-5 w-5"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.5 19.5L3 12m0 0 7.5-7.5M3 12h18"
+                  />
                 </svg>
               </Link>
-              <div className="flex-1 min-w-0">
-                <h1 className={`text-2xl font-bold ${heading}`}>Maintenance & Repairs</h1>
-                <p className={`text-sm ${textMeta} mt-1`}>
-                  {records.length} {records.length === 1 ? "record" : "records"} total
+              <div className="min-w-0 flex-1">
+                <h1 className={`text-2xl font-bold ${heading}`}>
+                  Maintenance &amp; Repairs
+                </h1>
+                <p className={`mt-1 text-sm ${textMeta}`}>
+                  {records.length}{" "}
+                  {records.length === 1 ? "record" : "records"} total
                 </p>
               </div>
             </div>
             <div className="flex-shrink-0">
-              <AddRecordButton homeId={homeId} label="+ Add Record" defaultType="record" />
+              <AddRecordButton
+                homeId={homeId}
+                label="+ Add Record"
+                defaultType="record"
+              />
             </div>
           </div>
         </section>
 
         {/* Stats Overview */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            label="Total Records"
-            value={records.length}
-          />
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatCard label="Total Records" value={records.length} />
           <StatCard
             label="Total Spent"
-            value={`$${records.reduce((sum, r) => sum + (r.cost || 0), 0).toLocaleString()}`}
+            value={`$${records
+              .reduce((sum, r) => sum + (r.cost || 0), 0)
+              .toLocaleString()}`}
           />
-          <StatCard
-            label="Maintenance"
-            value={counts.maintenance || 0}
-          />
-          <StatCard
-            label="Repairs"
-            value={counts.repair || 0}
-          />
+          <StatCard label="Maintenance" value={counts.maintenance || 0} />
+          <StatCard label="Repairs" value={counts.repair || 0} />
         </section>
 
         {/* Client-side component for filters and list */}
@@ -224,6 +220,23 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
     <div className={glassTight}>
       <div className="text-sm text-white/70">{label}</div>
       <div className="mt-1 text-xl font-semibold text-white">{value}</div>
+    </div>
+  );
+}
+
+function Bg() {
+  return (
+    <div className="fixed inset-0 -z-50">
+      <Image
+        src="/myhomedox_home3.webp"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover object-center"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/45" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.45))]" />
     </div>
   );
 }

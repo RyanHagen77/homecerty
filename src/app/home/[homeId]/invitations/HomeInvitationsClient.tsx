@@ -143,8 +143,10 @@ function ReceivedTab({
                             {invitation.inviter.proProfile.businessName ||
                               invitation.inviter.proProfile.company}
                           </span>
-                          {invitation.inviter.proProfile.rating && (
-                            <span>⭐ {invitation.inviter.proProfile.rating}</span>
+                          {invitation.inviter.proProfile.rating != null && (
+                            <span>
+                              ⭐ {invitation.inviter.proProfile.rating}
+                            </span>
                           )}
                           {invitation.inviter.proProfile.verified && (
                             <span className="text-emerald-300">
@@ -172,7 +174,7 @@ function ReceivedTab({
                     <p className="mb-1 text-xs font-medium text-white/80">
                       Message:
                     </p>
-                    <p className="text-sm text-white/70">
+                    <p className="text-sm text.white/70">
                       {invitation.message}
                     </p>
                   </div>
@@ -211,7 +213,7 @@ function ReceivedTab({
             {history.map((invitation) => (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-xl transition-colors hover:bg-white/10"
+                className="flex items-center justify-between rounded-lg border border-white/10 bg.white/5 p-4 backdrop-blur-xl transition-colors hover:bg-white/10"
               >
                 <div>
                   <p className="font-medium text-white">
@@ -298,7 +300,7 @@ function SentTab({
                 </div>
 
                 {invitation.message && (
-                  <div className="mt-3 rounded-lg border border-white/20 bg-white/10 p-3">
+                  <div className="mt-3 rounded-lg border border.white/20 bg-white/10 p-3">
                     <p className="mb-1 text-xs font-medium text-white/90">
                       Message:
                     </p>
@@ -371,8 +373,8 @@ export default function HomeInvitationsClient({
 }: {
   homeId: string;
   homeAddress: string;
-  receivedInvitations: ReceivedInvitation[];
-  sentInvitations: SentInvitation[];
+  receivedInvitations?: ReceivedInvitation[];
+  sentInvitations?: SentInvitation[];
 }) {
   const router = useRouter();
   const { push: toast } = useToast();
@@ -382,15 +384,18 @@ export default function HomeInvitationsClient({
   const [selectedInvitation, setSelectedInvitation] = useState<string | null>(
     null
   );
-
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  const pendingReceived = receivedInvitations.filter(
-    (inv) => inv.status === "PENDING"
-  );
+  // Normalize to avoid undefined issues
+  const received = receivedInvitations ?? [];
+  const sent = sentInvitations ?? [];
+
+  const pendingReceived = received.filter((inv) => inv.status === "PENDING");
   const pendingCount = pendingReceived.length;
 
-  const totalInvitations = receivedInvitations.length + sentInvitations.length;
+  const pendingSentCount = sent.filter((i) => i.status === "PENDING").length;
+
+  const totalInvitations = received.length + sent.length;
 
   function handleAcceptClick(invitationId: string) {
     setSelectedInvitation(invitationId);
@@ -425,8 +430,8 @@ export default function HomeInvitationsClient({
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        toast(error.error || "Failed to accept invitation");
+        const error = await response.json().catch(() => null);
+        toast(error?.error || "Failed to accept invitation");
         setProcessing(null);
         return;
       }
@@ -499,7 +504,10 @@ export default function HomeInvitationsClient({
     <div className="mx-auto max-w-5xl space-y-6 p-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm">
-        <Link href={`/home/${homeId}`} className="text-white/70 hover:text-white transition-colors">
+        <Link
+          href={`/home/${homeId}`}
+          className="text-white/70 hover:text-white transition-colors"
+        >
           {homeAddress}
         </Link>
         <span className="text-white/50">/</span>
@@ -523,7 +531,11 @@ export default function HomeInvitationsClient({
                 stroke="currentColor"
                 className="w-5 h-5"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.5 19.5L3 12m0 0 7.5-7.5M3 12h18"
+                />
               </svg>
             </Link>
             <div className="flex-1 min-w-0">
@@ -531,7 +543,9 @@ export default function HomeInvitationsClient({
                 Contractor Invitations
               </h1>
               <p className={`text-sm ${textMeta} mt-1`}>
-                {totalInvitations} {totalInvitations === 1 ? "invitation" : "invitations"} • {pendingCount} pending
+                {totalInvitations}{" "}
+                {totalInvitations === 1 ? "invitation" : "invitations"} •{" "}
+                {pendingCount} pending
               </p>
             </div>
           </div>
@@ -569,11 +583,8 @@ export default function HomeInvitationsClient({
                 : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"
             }`}
           >
-            Sent{" "}
-            {sentInvitations.filter((i) => i.status === "PENDING").length > 0 &&
-              `(${
-                sentInvitations.filter((i) => i.status === "PENDING").length
-              })`}
+            Sent
+            {pendingSentCount > 0 && ` (${pendingSentCount})`}
           </button>
         </div>
       </section>
@@ -582,14 +593,14 @@ export default function HomeInvitationsClient({
       <section className={glass}>
         {activeTab === "received" ? (
           <ReceivedTab
-            invitations={receivedInvitations}
+            invitations={received}
             processing={processing}
             onAccept={handleAcceptClick}
             onDecline={handleDecline}
           />
         ) : (
           <SentTab
-            invitations={sentInvitations}
+            invitations={sent}
             processing={processing}
             onCancel={handleCancel}
           />
@@ -616,7 +627,7 @@ export default function HomeInvitationsClient({
                 setShowAddressModal(false);
                 setSelectedInvitation(null);
               }}
-              className="mt-4 w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
+              className="mt-4 w-full rounded-lg border border.white/20 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
             >
               Cancel
             </button>

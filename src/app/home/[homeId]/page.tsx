@@ -24,7 +24,7 @@ type HomeMeta = {
   };
 };
 
-type Record = {
+type HomeRecord = {
   id: string;
   title: string;
   note: string | null;
@@ -46,6 +46,22 @@ type Warranty = {
   provider: string | null;
   expiresAt: Date | null;
 };
+
+function formatDate(
+  value: Date | string | null | undefined,
+  fallback: string = "—"
+): string {
+  if (!value) return fallback;
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return fallback;
+  return d.toLocaleDateString();
+}
+
+function isWarrantyExpiringSoon(expiresAt: Date | null, now: Date): boolean {
+  if (!expiresAt) return false;
+  const in90Days = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  return expiresAt >= now && expiresAt <= in90Days;
+}
 
 export default async function HomePage({
   params,
@@ -110,7 +126,9 @@ export default async function HomePage({
     home.city ? `, ${home.city}` : ""
   }${home.state ? `, ${home.state}` : ""}${home.zip ? ` ${home.zip}` : ""}`;
 
-  const meta = home.meta as HomeMeta | null;
+  const rawMeta = home.meta as unknown;
+  const meta: HomeMeta | null =
+    rawMeta && typeof rawMeta === "object" ? (rawMeta as HomeMeta) : null;
   const attrs = meta?.attrs ?? {};
 
   const stats = {
@@ -123,12 +141,13 @@ export default async function HomePage({
     lastUpdated: attrs.lastUpdated ?? undefined,
   };
 
-  const serializedRecords = home.records.map((record) => ({
+  const serializedRecords: HomeRecord[] = home.records.map((record) => ({
     ...record,
     cost: record.cost ? Number(record.cost) : null,
   }));
 
   const now = new Date();
+
   const overdueReminders = home.reminders.filter(
     (r) => new Date(r.dueAt) < now
   );
@@ -136,13 +155,8 @@ export default async function HomePage({
     (r) => new Date(r.dueAt) >= now
   );
 
-  const ninetyDaysFromNow = new Date();
-  ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
-  const expiringSoonWarranties = home.warranties.filter(
-    (w) =>
-      w.expiresAt &&
-      new Date(w.expiresAt) <= ninetyDaysFromNow &&
-      new Date(w.expiresAt) >= now
+  const expiringSoonWarranties = home.warranties.filter((w) =>
+    isWarrantyExpiringSoon(w.expiresAt, now)
   );
 
   return (
@@ -191,14 +205,11 @@ export default async function HomePage({
                     initialAddress={addrLine}
                   />
 
-                  <h3 className={`text-lg font-medium ${heading}`}>
+                  <h1 className={`text-2xl font-semibold ${heading}`}>
                     {addrLine}
-                  </h3>
+                  </h1>
                   <p className={`text-sm ${textMeta}`}>
-                    Last updated{" "}
-                    {stats.lastUpdated
-                      ? new Date(stats.lastUpdated).toLocaleDateString()
-                      : "—"}
+                    Last updated {formatDate(stats.lastUpdated)}
                   </p>
                 </div>
               </div>
@@ -209,9 +220,8 @@ export default async function HomePage({
           </div>
         </section>
 
-{/* Stats */}
-<PropertyStats homeId={home.id} stats={stats} />
-
+        {/* Stats */}
+        <PropertyStats homeId={home.id} stats={stats} />
 
         {/* Alerts */}
         {(overdueReminders.length > 0 ||
@@ -229,8 +239,7 @@ export default async function HomePage({
                     <ul className="mt-2 space-y-1">
                       {overdueReminders.map((r) => (
                         <li key={r.id} className="text-sm text-white/90">
-                          • {r.title} (due{" "}
-                          {new Date(r.dueAt).toLocaleDateString()})
+                          • {r.title} (due {formatDate(r.dueAt)})
                         </li>
                       ))}
                     </ul>
@@ -258,8 +267,10 @@ export default async function HomePage({
                     <ul className="mt-2 space-y-1">
                       {expiringSoonWarranties.map((w) => (
                         <li key={w.id} className="text-sm text-white/90">
-                          • {w.item} expires{" "}
-                          {new Date(w.expiresAt!).toLocaleDateString()}
+                          • {w.item}{" "}
+                          {w.expiresAt && (
+                            <>expires {formatDate(w.expiresAt)}</>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -322,6 +333,7 @@ export default async function HomePage({
                       key={m.id}
                       reminder={m}
                       homeId={home.id}
+                      now={now}
                     />
                   ))}
                 </ul>
@@ -345,6 +357,7 @@ export default async function HomePage({
                       key={w.id}
                       warranty={w}
                       homeId={home.id}
+                      now={now}
                     />
                   ))}
                 </ul>
@@ -361,7 +374,13 @@ export default async function HomePage({
 
 /* ------- Helpers ------- */
 
-function RecordItem({ record, homeId }: { record: Record; homeId: string }) {
+function RecordItem({
+  record,
+  homeId,
+}: {
+  record: HomeRecord;
+  homeId: string;
+}) {
   return (
     <Link
       href={`/home/${homeId}/records/${record.id}`}
@@ -378,10 +397,8 @@ function RecordItem({ record, homeId }: { record: Record; homeId: string }) {
             )}
           </div>
 
-          <div className="mt-1 flex items-center gap-3 text-sm text-white/70">
-            {record.date && (
-              <span>📅 {new Date(record.date).toLocaleDateString()}</span>
-            )}
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-white/70">
+            {record.date && <span>📅 {formatDate(record.date)}</span>}
             {record.vendor && <span>🔧 {record.vendor}</span>}
             {record.cost != null && (
               <span className="font-medium text-green-300">
@@ -404,14 +421,16 @@ function RecordItem({ record, homeId }: { record: Record; homeId: string }) {
 function ReminderItem({
   reminder,
   homeId,
+  now,
 }: {
   reminder: Reminder;
   homeId: string;
+  now: Date;
 }) {
   const dueDate = new Date(reminder.dueAt);
-  const isOverdue = dueDate < new Date();
+  const isOverdue = dueDate < now;
   const daysUntilDue = Math.ceil(
-    (dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   );
 
   return (
@@ -431,7 +450,7 @@ function ReminderItem({
               isOverdue ? "text-red-400" : "text-white/70"
             }`}
           >
-            {dueDate.toLocaleDateString()}
+            {formatDate(dueDate)}
           </span>
           {!isOverdue && daysUntilDue <= 7 && (
             <span className="text-xs text-yellow-400">
@@ -447,16 +466,16 @@ function ReminderItem({
 function WarrantyItem({
   warranty,
   homeId,
+  now,
 }: {
   warranty: Warranty;
   homeId: string;
+  now: Date;
 }) {
   const expiresAt = warranty.expiresAt
     ? new Date(warranty.expiresAt)
     : null;
-  const isExpiringSoon =
-    expiresAt &&
-    expiresAt <= new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+  const expiringSoon = isWarrantyExpiringSoon(expiresAt, now);
 
   return (
     <Link
@@ -479,10 +498,10 @@ function WarrantyItem({
             <>
               <span
                 className={`text-xs font-medium ${
-                  isExpiringSoon ? "text-yellow-400" : "text-white/70"
+                  expiringSoon ? "text-yellow-400" : "text-white/70"
                 }`}
               >
-                {expiresAt.toLocaleDateString()}
+                {formatDate(expiresAt)}
               </span>
               <span className="text-xs text-white/60">Expires</span>
             </>

@@ -1,5 +1,6 @@
 // src/lib/s3.ts
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /* --- Safe env helpers --- */
 function must(name: string): string {
@@ -43,7 +44,7 @@ export const s3 = new S3Client({
 /* --- Build keys for any entity type --- */
 export function buildKey(
   homeId: string,
-  entityType: "records" | "reminders" | "warranties",
+  entityType: "records" | "reminders" | "warranties" | "job-requests",
   entityId: string,
   filename: string
 ) {
@@ -76,4 +77,27 @@ export function buildWarrantyKey(
   filename: string
 ) {
   return buildKey(homeId, "warranties", warrantyId, filename);
+}
+
+/* --- Build keys for job requests --- */
+export function buildJobRequestKey(
+  homeId: string,
+  jobRequestId: string,
+  filename: string
+) {
+  return buildKey(homeId, "job-requests", jobRequestId, filename);
+}
+
+/* --- Sign GET URLs --- */
+export async function getSignedGetUrl(key: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: key,
+  });
+  return await getSignedUrl(s3, command, { expiresIn: 3600 });
+}
+
+export function extractS3Key(url: string): string {
+  const match = url.match(/amazonaws\.com\/(.+)$/);
+  return match ? match[1] : url;
 }
