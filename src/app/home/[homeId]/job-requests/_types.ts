@@ -1,4 +1,4 @@
-// app/home/[homeId]/requested-jobs/_types.ts
+// app/home/[homeId]/job-requests/_types.ts
 
 export type JobRequestStatus =
   | "PENDING"

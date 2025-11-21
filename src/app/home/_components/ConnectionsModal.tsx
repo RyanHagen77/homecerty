@@ -77,7 +77,7 @@ export function ConnectionsModal({
                 {/* Pending job requests */}
                 {pendingJobRequestsCount > 0 && (
                   <Link
-                    href={`/home/${homeId}/requested-jobs`}
+                    href={`/home/${homeId}/job-requests`}
                     onClick={onCloseAction}
                     className={`${glass} flex items-center justify-between rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 hover:bg-blue-500/20`}
                   >

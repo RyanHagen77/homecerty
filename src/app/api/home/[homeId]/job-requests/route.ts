@@ -1,10 +1,10 @@
 /**
  * HOMEOWNER REQUESTED JOBS API
  *
- * GET /api/home/[homeId]/requested-jobs - List job requests for this home
- * POST /api/home/[homeId]/requested-jobs - Create new job request
+ * GET /api/home/[homeId]/job-requests - List job requests for this home
+ * POST /api/home/[homeId]/job-requests - Create new job request
  *
- * Location: app/api/home/[homeId]/requested-jobs/route.ts
+ * Location: app/api/home/[homeId]/job-requests/route.ts
  */
 
 import { NextRequest, NextResponse } from "next/server";

@@ -1,4 +1,4 @@
-// app/home/[homeId]/requested-jobs/_components/JobRequestActions.tsx
+// app/home/[homeId]/job-requests/_components/JobRequestActions.tsx
 "use client";
 
 import { useState } from "react";
@@ -25,7 +25,7 @@ export function JobRequestActions({ jobRequest, homeId }: Props) {
     setActing(true);
     try {
       const res = await fetch(
-        `/api/home/${homeId}/requested-jobs/${jobRequest.id}`,
+        `/api/home/${homeId}/job-requests/${jobRequest.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -55,7 +55,7 @@ export function JobRequestActions({ jobRequest, homeId }: Props) {
     setActing(true);
     try {
       const res = await fetch(
-        `/api/home/${homeId}/requested-jobs/${jobRequest.id}`,
+        `/api/home/${homeId}/job-requests/${jobRequest.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -68,7 +68,7 @@ export function JobRequestActions({ jobRequest, homeId }: Props) {
         throw new Error(error?.error || "Failed to cancel request");
       }
 
-      router.push(`/home/${homeId}/requested-jobs`);
+      router.push(`/home/${homeId}/job-requests`);
     } catch (error) {
       console.error("Error cancelling request:", error);
       alert(

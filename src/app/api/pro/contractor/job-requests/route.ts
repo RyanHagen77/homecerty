@@ -1,10 +1,10 @@
 /**
  * JOB REQUESTS API
  *
- * POST /api/requested-jobs - Create new job request (homeowner)
- * GET /api/requested-jobs - List job requests (filtered by role)
+ * POST /api/job-requests - Create new job request (homeowner)
+ * GET /api/job-requests - List job requests (filtered by role)
  *
- * Location: app/api/requested-jobs/route.ts
+ * Location: app/api/job-requests/route.ts
  */
 
 import { NextRequest, NextResponse } from "next/server";

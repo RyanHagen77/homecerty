@@ -1,4 +1,4 @@
-// app/home/[homeId]/requested-jobs/new/page.tsx
+// app/home/[homeId]/job-requests/new/page.tsx
 export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth";

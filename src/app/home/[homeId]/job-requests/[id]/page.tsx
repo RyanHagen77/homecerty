@@ -4,7 +4,7 @@
  * View single job request, accept quotes, cancel request
  * WITH PHOTO GALLERY
  *
- * Location: app/home/[homeId]/requested-jobs/[id]/page.tsx
+ * Location: app/home/[homeId]/job-requests/[id]/page.tsx
  */
 
 export const dynamic = "force-dynamic";
@@ -170,7 +170,7 @@ export default async function JobRequestDetailPage({ params }: PageProps) {
           </Link>
           <span className="text-white/50">/</span>
           <Link
-            href={`/home/${homeId}/requested-jobs`}
+            href={`/home/${homeId}/job-requests`}
             className="text-white/70 transition-colors hover:text-white"
           >
             Job Requests

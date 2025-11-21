@@ -221,7 +221,7 @@ export function RequestWorkForm({ homeId, connections }: Props) {
       }
 
       // Step 1: Create job request first (without photos)
-      const res = await fetch(`/api/home/${homeId}/requested-jobs`, {
+      const res = await fetch(`/api/home/${homeId}/job-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -252,7 +252,7 @@ export function RequestWorkForm({ homeId, connections }: Props) {
           photoUrls = await uploadPhotos(jobRequest.id);
 
           // Step 3: Update job request with photo URLs
-          const updateRes = await fetch(`/api/home/${homeId}/requested-jobs/${jobRequest.id}`, {
+          const updateRes = await fetch(`/api/home/${homeId}/job-requests/${jobRequest.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -275,7 +275,7 @@ export function RequestWorkForm({ homeId, connections }: Props) {
       photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
 
       // Redirect to the job request detail page
-      router.push(`/home/${homeId}/requested-jobs/${jobRequest.id}`);
+      router.push(`/home/${homeId}/job-requests/${jobRequest.id}`);
     } catch (error) {
       console.error("Error creating job request:", error);
       alert(error instanceof Error ? error.message : "Failed to create job request");

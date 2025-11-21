@@ -1,24 +1,22 @@
 /**
- * INDIVIDUAL JOB REQUEST API (HOMEOWNER)
+ * INDIVIDUAL JOB REQUEST API (CONTRACTOR)
  *
- * GET /api/home/[homeId]/requested-jobs/[id] - Get single job request
- * PATCH /api/home/[homeId]/requested-jobs/[id] - Update job request (accept quote, cancel, etc.)
- * DELETE /api/home/[homeId]/requested-jobs/[id] - Delete/cancel job request
+ * GET /api/pro/contractor/job-requests/[id] - Get single job request
+ * PATCH /api/pro/contractor/job-requests/[id] - Update job request (respond, decline, etc.)
  *
- * Location: app/api/home/[homeId]/requested-jobs/[id]/route.ts
+ * Location: app/api/pro/contractor/job-requests/[id]/route.ts
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { requireHomeAccess } from "@/lib/authz";
 import type { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
 type RouteContext = {
-  params: Promise<{ homeId: string; id: string }>;
+  params: Promise<{ id: string }>;
 };
 
 // GET - Get single job request
@@ -33,8 +31,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { homeId, id } = await context.params;
-    await requireHomeAccess(homeId, session.user.id);
+    if (session.user.role !== "PRO") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id } = await context.params;
+    const userId = session.user.id;
 
     const jobRequest = await prisma.jobRequest.findUnique({
       where: { id },
@@ -43,31 +45,24 @@ export async function GET(
           select: {
             id: true,
             address: true,
+            addressLine2: true,
             city: true,
             state: true,
             zip: true,
           },
         },
-        contractor: {
+        homeowner: {
           select: {
             id: true,
             name: true,
             email: true,
             image: true,
-            proProfile: {
-              select: {
-                businessName: true,
-                company: true,
-                phone: true,
-                verified: true,
-                rating: true,
-              },
-            },
           },
         },
         connection: {
           select: {
             id: true,
+            notes: true,
             verifiedWorkCount: true,
             totalSpent: true,
             lastWorkDate: true,
@@ -84,7 +79,6 @@ export async function GET(
             workType: true,
             workDate: true,
             status: true,
-            cost: true,
           },
         },
         attachments: {
@@ -105,13 +99,8 @@ export async function GET(
       );
     }
 
-    // Verify this job request belongs to this home
-    if (jobRequest.homeId !== homeId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Verify homeowner owns this request
-    if (jobRequest.homeownerId !== session.user.id) {
+    // Verify this job request is for this contractor
+    if (jobRequest.contractorId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -138,14 +127,6 @@ export async function GET(
             })),
           }
         : null,
-      workRecord: jobRequest.workRecord
-        ? {
-            ...jobRequest.workRecord,
-            cost: jobRequest.workRecord.cost
-              ? Number(jobRequest.workRecord.cost)
-              : null,
-          }
-        : null,
     };
 
     return NextResponse.json({ jobRequest: serialized });
@@ -158,7 +139,7 @@ export async function GET(
   }
 }
 
-// PATCH - Update job request (homeowner actions)
+// PATCH - Update job request (contractor responds)
 export async function PATCH(
   request: NextRequest,
   context: RouteContext
@@ -170,9 +151,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { homeId, id } = await context.params;
-    await requireHomeAccess(homeId, session.user.id);
+    if (session.user.role !== "PRO") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
+    const { id } = await context.params;
     const userId = session.user.id;
     const body = await request.json();
 
@@ -188,34 +171,25 @@ export async function PATCH(
       );
     }
 
-    // Verify ownership
-    if (existing.homeId !== homeId || existing.homeownerId !== userId) {
+    // Verify this job request is for this contractor
+    if (existing.contractorId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const updateData: Prisma.JobRequestUpdateInput = {};
 
-    // Homeowner can update: status (cancel/accept), title, description, etc.
+    // Contractor can update: status, contractorNotes, respondedAt
     if (body.status) {
-      // Validate homeowner can set these statuses
-      const allowedStatuses = ["CANCELLED", "ACCEPTED"];
+      // Validate contractor can set these statuses
+      const allowedStatuses = ["DECLINED", "IN_PROGRESS", "COMPLETED"];
       if (allowedStatuses.includes(body.status)) {
         updateData.status = body.status;
+        updateData.respondedAt = new Date();
       }
     }
 
-    if (body.title) updateData.title = body.title;
-    if (body.description) updateData.description = body.description;
-    if (body.category) updateData.category = body.category;
-    if (body.urgency) updateData.urgency = body.urgency;
-    if (body.budgetMin !== undefined)
-      updateData.budgetMin = body.budgetMin ? parseFloat(body.budgetMin) : null;
-    if (body.budgetMax !== undefined)
-      updateData.budgetMax = body.budgetMax ? parseFloat(body.budgetMax) : null;
-    if (body.desiredDate !== undefined)
-      updateData.desiredDate = body.desiredDate ? new Date(body.desiredDate) : null;
-    if (body.photos !== undefined) {
-      updateData.photos = body.photos;
+    if (body.contractorNotes !== undefined) {
+      updateData.contractorNotes = body.contractorNotes;
     }
 
     // Update job request
@@ -223,82 +197,29 @@ export async function PATCH(
       where: { id },
       data: updateData,
       include: {
-        contractor: {
+        home: {
+          select: {
+            address: true,
+            city: true,
+            state: true,
+          },
+        },
+        homeowner: {
           select: {
             name: true,
             email: true,
-            proProfile: {
-              select: {
-                businessName: true,
-              },
-            },
           },
         },
       },
     });
 
-    // TODO: Send notifications on status changes
+    // TODO: Send notification to homeowner on status change
 
     return NextResponse.json({ jobRequest });
   } catch (error) {
     console.error("Error updating job request:", error);
     return NextResponse.json(
       { error: "Failed to update job request" },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE - Cancel/delete job request
-export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    const session = await getServerSession(authConfig);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { homeId, id } = await context.params;
-    await requireHomeAccess(homeId, session.user.id);
-
-    const userId = session.user.id;
-
-    const jobRequest = await prisma.jobRequest.findUnique({
-      where: { id },
-    });
-
-    if (!jobRequest) {
-      return NextResponse.json(
-        { error: "Job request not found" },
-        { status: 404 }
-      );
-    }
-
-    // Verify ownership
-    if (jobRequest.homeId !== homeId || jobRequest.homeownerId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Can only delete if still pending or declined
-    if (!["PENDING", "DECLINED", "CANCELLED"].includes(jobRequest.status)) {
-      return NextResponse.json(
-        { error: "Cannot delete job request in this status" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.jobRequest.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting job request:", error);
-    return NextResponse.json(
-      { error: "Failed to delete job request" },
       { status: 500 }
     );
   }

@@ -168,10 +168,10 @@ export default function WorkClient({
             {/* Request Work Button */}
             <div className="flex-shrink-0">
               <Link
-                href={`/home/${homeId}/requested-jobs/new`}
+                href={`/home/${homeId}/job-requests/new`}
                 className={ctaPrimary}
               >
-                🔨 Request Work
+                + Request Work
               </Link>
             </div>
           </div>
@@ -362,7 +362,7 @@ function RequestServiceTab({
 
             <div className="flex flex-col gap-2">
               <Link
-                href={`/home/${homeId}/requested-jobs/new`}
+                href={`/home/${homeId}/job-requests/new`}
                 className={`${ctaPrimary} whitespace-nowrap text-center text-sm`}
               >
                 Request Service
@@ -448,7 +448,7 @@ function RequestedJobsTab({
       {jobRequests.map((job) => (
         <Link
           key={job.id}
-          href={`/home/${homeId}/requested-jobs/${job.id}`}
+          href={`/home/${homeId}/job-requests/${job.id}`}
           className="block rounded-xl border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10"
         >
           <div className="mb-4 flex items-start justify-between gap-4">

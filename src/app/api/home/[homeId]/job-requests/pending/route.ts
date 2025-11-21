@@ -1,20 +1,28 @@
 /**
- * CONTRACTOR PENDING JOB REQUESTS COUNT
+ * HOMEOWNER PENDING JOB REQUESTS COUNT
  *
- * GET /api/pro/contractor/requested-jobs/pending
- * Returns count of job requests needing contractor response
+ * GET /api/home/[homeId]/job-requests/pending
+ * Returns count of job requests awaiting contractor response
  *
- * Used by contractor dashboard badge
+ * Used by homeowner dashboard badge
  */
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireHomeAccess } from "@/lib/authz";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+type RouteParams = { homeId: string };
+
+export async function GET(
+  _req: Request,
+  { params }: { params: RouteParams }
+) {
+  const { homeId } = params;
+
   try {
     const session = await getServerSession(authConfig);
 
@@ -22,18 +30,17 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== "PRO") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    await requireHomeAccess(homeId, session.user.id);
 
     const userId = session.user.id;
 
-    // Count job requests that need contractor response
+    // Count job requests awaiting contractor response or homeowner to accept quote
     const pendingCount = await prisma.jobRequest.count({
       where: {
-        contractorId: userId,
+        homeId,
+        homeownerId: userId,
         status: {
-          in: ["PENDING", "QUOTED"], // Pending response or quoted but not accepted yet
+          in: ["PENDING", "QUOTED"], // Waiting for contractor response or homeowner to accept quote
         },
       },
     });
